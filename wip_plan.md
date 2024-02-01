@@ -4,7 +4,7 @@
 1. Collect historical data for TQQQ
   1. Choose API
   2. Ensure TQQQ for time-period is available
-  3. Decide which value(s) to focus on (open, high, low, close)
+  3. Decide which value(s) to focus on (open, high, low, close) **Most likely close
   4. Determine the structure for the data so data handling is clear
 2. Clean the data for missing data or outliers
   1. Remove or account for missing data points
@@ -37,7 +37,7 @@
   3. Determine the threshold for decision
     1. High-value: buy, middle-range: hold, low-value: sell
     2. Example: value >= 0.65 -> buy
-  4. Use LSTMs or RNNs?
+  4. Use LSTMs or RNNs? (Thought we're not using these anymore?)
     1. RNN is simpler than LSTMs while LSTMs work great for time-sequence data (like stocks)
     2. Would require transforming the input data into windows of time sequences
     3. Reshape input into 3D array
