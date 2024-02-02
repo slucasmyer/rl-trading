@@ -7,7 +7,7 @@ API_KEY = "5W4QR93OQ48Z9GN6"
 url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=TQQQ&datatype=csv&apikey={API_KEY}"
 """
 Optional Parameters: 
-'outputsize' - Default outputsize is 'compact'. Can do outputsize=full to receive stock's ENTIRE daily price history
+'outputsize' - Default outputsize is 'compact'. Can do outputsize=full to receive stock's ENTIRE daily price history. 'compact' gives 100 most recent days
 'datatype' - Can be set to either 'json' or 'csv'
 """
 
