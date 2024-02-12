@@ -149,10 +149,10 @@ class DataCollector:
 
         # Normalize all data columns except for the timestamp column
         scaler = MinMaxScaler()
-        normalized_data = scaler.fit_transform(data_array[:, 1:])
+        normalized_data = scaler.fit_transform(data_array)
 
         # Recreate the DataFrame with the normalized data
-        self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns[1:])
+        self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
 
     def _backfill_data(self):
         """
