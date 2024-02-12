@@ -159,7 +159,7 @@ class DataCollector:
         Backfills cells that do not have a value.
         """
         for column in self.norm_data_df.columns:
-            self.norm_data_df[column] = self.data_df[column].interpolate(method='bfill')
+            self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='bfill')
 
     def prepare_and_calculate_data(self) -> pd.DataFrame:
         """
@@ -179,7 +179,6 @@ if __name__ == '__main__':
     # data = pd.read_csv("testing_tqqq.csv")
     data_df = DataCollector(data)
     prepared_data = data_df.prepare_and_calculate_data()
-
     # Verify results as output
     # print(prepared_data)
 
