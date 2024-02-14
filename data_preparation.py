@@ -149,10 +149,17 @@ class DataCollector:
 
         # Normalize all data columns except for the timestamp column
         scaler = MinMaxScaler()
-        normalized_data = scaler.fit_transform(data_array[:, 1:])
+        normalized_data = scaler.fit_transform(data_array)
 
         # Recreate the DataFrame with the normalized data
-        self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns[1:])
+        self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
+
+    def _backfill_data(self):
+        """
+        Backfills cells that do not have a value.
+        """
+        for column in self.norm_data_df.columns:
+            self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='bfill')
 
     def prepare_and_calculate_data(self) -> pd.DataFrame:
         """
@@ -161,6 +168,7 @@ class DataCollector:
         self._clean_data()
         self._calculate_stock_measures()
         self._normalize_data()
+        self._backfill_data()
 
         return self.norm_data_df
 
@@ -168,11 +176,12 @@ class DataCollector:
 if __name__ == '__main__':
     # Test class and methods
     data = pd.read_csv("training_tqqq.csv")
+    # data = pd.read_csv("testing_tqqq.csv")
     data_df = DataCollector(data)
     prepared_data = data_df.prepare_and_calculate_data()
-
     # Verify results as output
-    print(prepared_data)
+    # print(prepared_data)
 
     # To save the data
     # prepared_data.to_csv("training_tqqq_prepared.csv")
+    # prepared_data.to_csv("testing_tqqq_prepared.csv")
