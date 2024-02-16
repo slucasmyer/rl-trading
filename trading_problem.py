@@ -1,24 +1,15 @@
 import numpy as np
 import pandas as pd
-import torch
-from pathlib import Path
+from torch import Tensor
+from torch.nn import DataParallel
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import FloatRandomSampling
-from pymoo.optimize import minimize
-from pymoo.visualization.scatter import Scatter
-from torch import nn
-import matplotlib.pyplot as plt
 
-from data_preparation import DataCollector
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
 
 
 class TradingProblem(ElementwiseProblem):
-    def __init__(self, data: pd.DataFrame, network: PolicyNetwork, environment: TradingEnvironment):
+    def __init__(self, data: pd.DataFrame, network: DataParallel[PolicyNetwork] | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
         self.data = data
         self.network = network
         self.environment = environment
@@ -41,7 +32,7 @@ class TradingProblem(ElementwiseProblem):
             num_param = param.numel() # Compute the number of elements in this layer
             param_values = params[idx:idx + num_param] # Extract the corresponding part of `params`
             param_values = param_values.reshape(param.size()) # Reshape the extracted values into the correct shape for this layer
-            param_values = torch.Tensor(param_values) # Convert to the appropriate tensor
+            param_values = Tensor(param_values) # Convert to the appropriate tensor
             new_state_dict[name] = param_values # Add to the new state dictionary
             idx += num_param # Update the index
         model.load_state_dict(new_state_dict) # Load the new state dictionary into the model

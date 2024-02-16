@@ -20,6 +20,7 @@ class DataCollector:
         """
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
+        self.data_df.index = pd.to_datetime(self.data_df.index) # added this because of an issue in the _backfill_data method that required a datetime/numeric index
         self.data_df = self.data_df.dropna()
 
     def _calculate_stock_measures(self):
@@ -153,13 +154,15 @@ class DataCollector:
 
         # Recreate the DataFrame with the normalized data
         self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
+        print("normalized_data", self.norm_data_df.head() if self.norm_data_df is not None else ":(")
 
     def _backfill_data(self):
         """
         Backfills cells that do not have a value.
         """
+        print()
         for column in self.norm_data_df.columns:
-            self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='bfill')
+            self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='linear')
 
     def prepare_and_calculate_data(self) -> pd.DataFrame:
         """

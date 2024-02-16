@@ -1,16 +1,5 @@
-import numpy as np
 import pandas as pd
 import torch
-from pathlib import Path
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import FloatRandomSampling
-from pymoo.optimize import minimize
-from pymoo.visualization.scatter import Scatter
-from torch import nn
-import matplotlib.pyplot as plt
 
 
 class TradingEnvironment:
@@ -30,6 +19,7 @@ class TradingEnvironment:
           feature_vector = self.features[i:i+1]  # model expects shape [1, num_features]
           
           # Make a decision based on the policy network
+          feature_vector = feature_vector.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
           decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
           if decision == 0:  # Buy
               profit -= self.data['close'][i]

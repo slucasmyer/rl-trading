@@ -1,16 +1,4 @@
-import numpy as np
-import pandas as pd
-import torch
-from pathlib import Path
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import FloatRandomSampling
-from pymoo.optimize import minimize
-from pymoo.visualization.scatter import Scatter
 from torch import nn
-import matplotlib.pyplot as plt
 
 class PolicyNetwork(nn.Module):
     def __init__(self, dimensions):
