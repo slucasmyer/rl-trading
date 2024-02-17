@@ -4,21 +4,34 @@ from collections import defaultdict
 
 
 class TradingEnvironment:
+    """
+    A class to simulate trading in a stock market.
+    The environment is initialized with a dataset and a model.
+    The model is used to make trading decisions based on the dataset.
+    Profit and drawdown are calculated based on the trading decisions.
+    """
     def __init__(self, data, model):
-        self.data = data
-        self.model = model
-        self.features = preprocess_data(self.data)
-        self.balance = 100_000.00
-        self.profit = 0.00
-        self.drawdown = 0.00
-        self.shares_owned = 0
-        self.balances = defaultdict(list)
+        self.data = data # The dataset
+        self.model = model # The model
+        self.features = preprocess_data(self.data) # Preprocessed data
+        self.balance = 100_000.00 # Initial balance
+        self.profit = 0.00 # Profit
+        self.drawdown = 0.00 # Drawdown
+        self.shares_owned = 0 # Shares owned
+        self.balances = defaultdict(list) # Balances over time
 
         
     def simulate_trading(self):
-        self.profit = 0.00
-        max_profit = 0
-        self.drawdown = 0
+        """
+        Currently the core of this class.
+        Resets profit and drawdown for evaluation of new individual.
+        Simulates trading over the dataset.
+        Updates max_profit and drawdown.
+        Returned values are used to evaluate the individual (multi-objective).
+        """
+        self.profit = 0.00 # Reset profit for evaluation of new individual
+        max_profit = 0 # Max profit
+        self.drawdown = 0 # Reset drawdown for evaluation of new individual
         # Simulate trading over the dataset
         for i in range(len(self.features)):
           
@@ -45,12 +58,17 @@ class TradingEnvironment:
         # Update max_profit and drawdown
         max_profit = max(max_profit, self.profit)
         self.drawdown = min(self.drawdown, self.profit - max_profit)
-        
+
         return self.profit, self.drawdown
 
 
 def preprocess_data(data, columns_to_drop=[]):
-
+    """
+    This will likely be unnecessary soon.
+    Can be moved to data_preparation.py.
+    All we truly need here is to convert the DataFrame to a tensor.
+    May be useful to implement column dropping optionality there too.
+    """
     # Drop columns
     if columns_to_drop:
         data = data.drop(columns=columns_to_drop)

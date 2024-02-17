@@ -1,9 +1,10 @@
 from torch import nn
 
 class PolicyNetwork(nn.Module):
+    """A simple feedforward neural network for policy approximation."""
     def __init__(self, dimensions):
-        super(PolicyNetwork, self).__init__()
-        self.dims = dimensions
+        super(PolicyNetwork, self).__init__() # Call the superclass constructor
+        self.dims = dimensions # The dimensions of the network
         self.network = nn.Sequential(
             nn.Linear(self.dims[0], self.dims[1]),
             nn.ReLU(),
@@ -20,4 +21,5 @@ class PolicyNetwork(nn.Module):
         )
     
     def forward(self, x):
+        """Forward pass of the neural network."""
         return self.network(x)
