@@ -35,6 +35,8 @@ if __name__ == '__main__':
     if torch.cuda.device_count() > 1:
         print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
         network = DataParallel(network)
+    else:
+        print("Using a single GPU because you have a sad compute env.")
 
     # Move the model to GPU if available
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
