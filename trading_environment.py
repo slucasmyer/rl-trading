@@ -1,5 +1,6 @@
 import pandas as pd
 import torch
+from time import sleep
 from collections import defaultdict
 
 
@@ -16,9 +17,11 @@ class TradingEnvironment:
         self.features = preprocess_data(self.data) # Preprocessed data
         self.balance = 100_000.00 # Initial balance
         self.profit = 0.00 # Profit
+        self.max_profit = 0.00 # Max profit
         self.drawdown = 0.00 # Drawdown
         self.shares_owned = 0 # Shares owned
         self.balances = defaultdict(list) # Balances over time
+        self.stop_loss_triggered = defaultdict(list) # Stop loss triggered over time
 
         
     def simulate_trading(self):
@@ -30,8 +33,8 @@ class TradingEnvironment:
         Returned values are used to evaluate the individual (multi-objective).
         """
         self.profit = 0.00 # Reset profit for evaluation of new individual
-        max_profit = 0 # Max profit
-        self.drawdown = 0 # Reset drawdown for evaluation of new individual
+        self.max_profit = 0.00 # Max profit
+        self.drawdown = 0.00 # Reset drawdown for evaluation of new individual
         # Simulate trading over the dataset
         for i in range(len(self.features)):
           
@@ -42,7 +45,7 @@ class TradingEnvironment:
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
 
             current_price = self.data['close'].iloc[i]
-
+            print(f"Decision: {decision}, Current price: {current_price}")
             #   if decision == 0:  # Buy
             #       self.profit -= self.data['close'][i]
             #   elif decision == 2:  # Sell
@@ -56,9 +59,10 @@ class TradingEnvironment:
                 self.shares_owned = 0
           
         # Update max_profit and drawdown
-        max_profit = max(max_profit, self.profit)
-        self.drawdown = min(self.drawdown, self.profit - max_profit)
-
+        self.max_profit = max(self.max_profit, self.profit)
+        self.drawdown = min(self.drawdown, self.profit - self.max_profit)
+        print(f"Profit: {self.profit}, Drawdown: {self.drawdown}")
+        sleep(1)
         return self.profit, self.drawdown
 
 
@@ -75,6 +79,7 @@ def preprocess_data(data, columns_to_drop=[]):
     
     # Fill NaN values
     data_filled = data.fillna(method='bfill').fillna(method='ffill').fillna(0)
+    print("data_filled", data_filled.head())
     
     # Convert the DataFrame to a tensor
     features_tensor = torch.tensor(data_filled.values, dtype=torch.float32)

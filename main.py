@@ -31,6 +31,7 @@ if __name__ == '__main__':
 
     # Prepare and calculate the data
     processed_data = data_collector.prepare_and_calculate_data()
+    print("processed_data (main)", processed_data.head())
 
     # Get the input shape
     input_shape = processed_data.shape[1]

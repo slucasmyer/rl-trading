@@ -156,13 +156,11 @@ class DataCollector:
 
         # Recreate the DataFrame with the normalized data
         self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
-        print("normalized_data", self.norm_data_df.head() if self.norm_data_df is not None else ":(")
 
     def _backfill_data(self):
         """
         Backfills cells that do not have a value.
         """
-        print()
         for column in self.norm_data_df.columns:
             self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='linear')
 
