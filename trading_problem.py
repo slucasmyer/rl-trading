@@ -19,7 +19,7 @@ class TradingProblem(ElementwiseProblem):
         self.data = data
         
     def _evaluate(self, x, out, *args, **kwargs):
-        model = self.decode_model(x) # Decode the individual's parameters into the policy network
+        self.decode_model(x) # Decode the individual's parameters into the policy network
         profit, drawdown = self.environment.simulate_trading()  # Simulate trading
         # print(f"Profit: {profit}, Drawdown: {drawdown}")
         out["F"] = np.array([profit, -drawdown])
@@ -36,5 +36,4 @@ class TradingProblem(ElementwiseProblem):
             new_state_dict[name] = param_values # Add to the new state dictionary
             idx += num_param # Update the index
         model.load_state_dict(new_state_dict) # Load the new state dictionary into the model
-        return model
 
