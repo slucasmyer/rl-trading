@@ -11,6 +11,7 @@ class DataCollector:
     data_df: pd.DataFrame = None
     # Data for ML input
     norm_data_df: pd.DataFrame = None
+    closing_prices: pd.DataFrame = None
     windows: list[int] = field(default_factory=lambda: [16, 32, 64])
     time_shifts: list[int] = field(default_factory=lambda: [2, 4, 6, 8, 10])
 
@@ -22,6 +23,7 @@ class DataCollector:
         self.data_df = self.data_df.set_index("timestamp")
         self.data_df.index = pd.to_datetime(self.data_df.index) # added this because of an issue in the _backfill_data method that required a datetime/numeric index
         self.data_df = self.data_df.dropna()
+        self.closing_prices = self.data_df["close"]
 
     def _calculate_stock_measures(self):
         """
