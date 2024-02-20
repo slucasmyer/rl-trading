@@ -15,7 +15,7 @@ class TradingEnvironment:
     def __init__(self, features, model, closing_prices, max_gen, pop_size):
         self.features = features  # The dataset
         self.model = model  # The model
-        self.closing_prices = closing_prices
+        self.closing_prices = closing_prices # Closing prices
 
         self.initial_balance = 100_000.00  # Initial balance
         self.balance = self.initial_balance  # Balance
@@ -26,8 +26,11 @@ class TradingEnvironment:
         self.drawdowns = defaultdict(list)  # Drawdowns over time
         self.stop_loss_triggered = defaultdict(
             list)  # Stop loss triggered over time
+        
         self.max_gen = max_gen  # Used to structure dicts
         self.pop_size = pop_size  # Used to structure dicts
+        self.current_gen = 1  # Used to identify data
+        self.current_ind = 0  # Used to identify data
 
     def simulate_trading(self):
         """
@@ -37,6 +40,12 @@ class TradingEnvironment:
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
         """
+        # Update current individual num and current gen num
+        self.current_ind += 1
+        if self.current_ind > self.pop_size:
+            self.current_gen += 1
+            self.current_ind = 1
+        
         self.balance = self.initial_balance  # Reset profit for evaluation of new individual
         self.max_balance = self.max_balance  # Max profit
         self.drawdown = 0.00  # Reset drawdown for evaluation of new individual
