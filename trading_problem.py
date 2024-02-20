@@ -17,13 +17,20 @@ class TradingProblem(ElementwiseProblem):
 
     *** Still need to add 1 to n_vars for stop-loss gene ***
     """
-    def __init__(self, data: pd.DataFrame, network: DataParallel[PolicyNetwork] | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
+    def __init__(self, data: Tensor, network: DataParallel[PolicyNetwork] | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
         self.data = data # The dataset
-        self.network = network # The policy network
+        self.network: DataParallel[PolicyNetwork] | PolicyNetwork = network # The policy network
         self.environment = environment # The trading environment
         self.n_vars = sum([(self.network.dims[i] + 1) * self.network.dims[i + 1] for i in range(len(self.network.dims) - 1)]) # The number of variables
         super().__init__(n_var=self.n_vars, n_obj=2, xl=-1.0, xu=1.0) # Call the superclass constructor
         self.data = data # The dataset. Still not sure why I need to do this again, but it doesn't work otherwise.
+        self.chromsome: int = 0 # Int representing he individual's chromsome for mapping/visualization/selection purposes
+
+    def get_chromsome(self):
+        """Updates the chromsome and returns it."""
+        self.chromsome %= 100
+        self.chromsome += 1
+        return self.chromsome
         
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -33,8 +40,7 @@ class TradingProblem(ElementwiseProblem):
         The objectives are set to the profit and the negative drawdown.
         """
         self.decode_model(x) # Decode the individual's parameters into the policy network
-        profit, drawdown = self.environment.simulate_trading()  # Simulate trading
-        # print(f"Profit: {profit}, Drawdown: {drawdown}")
+        profit, drawdown = self.environment.simulate_trading(self.get_chromsome())  # Simulate trading
         out["F"] = np.array([profit, -drawdown]) # Set the objectives
 
     def decode_model(self, params):

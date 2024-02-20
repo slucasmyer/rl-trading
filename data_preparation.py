@@ -19,7 +19,8 @@ class DataCollector:
         self.time_shifts = [2, 4, 6, 8, 10]
 
         # Output tensor
-        self.data_tensor = None
+        self.data_tensor = torch.tensor([])
+        self.data_shape = None
 
     def _clean_data(self) -> None:
         """
@@ -174,7 +175,7 @@ class DataCollector:
         self.data_df = self.data_df.fillna(method='bfill').fillna(method='ffill').fillna(0)
         print("data_filled", self.data_df.head())
 
-    def prepare_and_calculate_data(self, columns_to_drop: list = None) -> None:
+    def prepare_and_calculate_data(self, columns_to_drop: list = []) -> None:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
         """
@@ -187,7 +188,9 @@ class DataCollector:
 
         # Drop unwanted columns
         self.data_df.drop(columns_to_drop, axis=1, inplace=True)
-
+        print("data_shape", self.data_df.shape)
+        # print type of self.data_df.shape
+        print("type of data_shape", type(self.data_df.shape))
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.data_df.values, dtype=torch.float32)
 
