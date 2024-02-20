@@ -11,10 +11,11 @@ class TradingEnvironment:
     The model is used to make trading decisions based on the dataset.
     Profit and drawdown are calculated based on the trading decisions.
     """
-    def __init__(self, data, model):
-        self.data = data # The dataset
+    def __init__(self, features, model, closing_prices):
+        self.features = features # The dataset
         self.model = model # The model
-        self.features = preprocess_data(self.data) # Preprocessed data
+        self.closing_prices = closing_prices
+
         self.balance = 100_000.00 # Initial balance
         self.profit = 0.00 # Profit
         self.max_profit = 0.00 # Max profit
@@ -44,7 +45,7 @@ class TradingEnvironment:
 
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
 
-            current_price = self.data['close'].iloc[i]
+            current_price = self.closing_prices.iloc[i]
             print(f"Decision: {decision}, Current price: {current_price}")
             #   if decision == 0:  # Buy
             #       self.profit -= self.data['close'][i]
@@ -64,25 +65,3 @@ class TradingEnvironment:
         print(f"Profit: {self.profit}, Drawdown: {self.drawdown}")
         sleep(1)
         return self.profit, self.drawdown
-
-
-def preprocess_data(data, columns_to_drop=[]):
-    """
-    This will likely be unnecessary soon.
-    Can be moved to data_preparation.py.
-    All we truly need here is to convert the DataFrame to a tensor.
-    May be useful to implement column dropping optionality there too.
-    """
-    # Drop columns
-    if columns_to_drop:
-        data = data.drop(columns=columns_to_drop)
-    
-    # Fill NaN values
-    data_filled = data.fillna(method='bfill').fillna(method='ffill').fillna(0)
-    print("data_filled", data_filled.head())
-    
-    # Convert the DataFrame to a tensor
-    features_tensor = torch.tensor(data_filled.values, dtype=torch.float32)
-    
-    return features_tensor
-

@@ -26,15 +26,15 @@ if __name__ == '__main__':
     Can be run in a python notebook or as a standalone script.
     """
 
-    # Load the data
-    data_collector = DataCollector(pd.read_csv(Path("./training_tqqq.csv")))
+    # Load the data (columns_to_drop listed just to highlight where that ability is)
+    data_collector = DataCollector(data_df=pd.read_csv(Path("./training_tqqq.csv")), columns_to_drop=[],)
 
     # Prepare and calculate the data
-    processed_data = data_collector.prepare_and_calculate_data()
-    print("processed_data (main)", processed_data.head())
+    data_collector.prepare_and_calculate_data()
+    print("processed_data (main)", data_collector.norm_df.head())
 
     # Get the input shape
-    input_shape = processed_data.shape[1]
+    input_shape = data_collector.data_tensor.shape[1]
 
     # Define the dimensions of the policy network
     dimensions = [input_shape, 10, 5, 10, 4, 10, 3]
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Create the trading environment
-    trading_env = TradingEnvironment(processed_data, network)
+    trading_env = TradingEnvironment(data_collector.data_tensor, network, data_collector.closing_prices)
 
     # initialize the thread pool and create the runner for ElementwiseProblem parallelization
     n_threads = 4
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     runner = StarmapParallelization(pool.starmap)
 
     # Create the trading problem
-    problem = TradingProblem(processed_data, network, trading_env, elementwise_runner = runner) # Optimization setup
+    problem = TradingProblem(data_collector.data_tensor, network, trading_env, elementwise_runner = runner) # Optimization setup
 
     # Create the algorithm
     algorithm = NSGA2(

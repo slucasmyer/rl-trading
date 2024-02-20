@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -9,9 +10,11 @@ from sklearn.preprocessing import MinMaxScaler
 class DataCollector:
     # Raw values will be still be available after normalizing the data
     data_df: pd.DataFrame = None
+    columns_to_drop: list = field(default_factory=lambda: [])
     # Data for ML input
-    norm_data_df: pd.DataFrame = None
+    norm_df: pd.DataFrame = None
     closing_prices: pd.DataFrame = None
+    data_tensor: torch.tensor = None
     windows: list[int] = field(default_factory=lambda: [16, 32, 64])
     time_shifts: list[int] = field(default_factory=lambda: [2, 4, 6, 8, 10])
 
@@ -21,7 +24,8 @@ class DataCollector:
         """
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
-        self.data_df.index = pd.to_datetime(self.data_df.index) # added this because of an issue in the _backfill_data method that required a datetime/numeric index
+        self.data_df.index = pd.to_datetime(
+            self.data_df.index)  # added this because of an issue in the _backfill_data method that required a datetime/numeric index
         self.data_df = self.data_df.dropna()
         self.closing_prices = self.data_df["close"]
 
@@ -46,8 +50,7 @@ class DataCollector:
             for time_shift in self.time_shifts:
                 self._create_avg_true_range_data(window, time_shift)
 
-    @staticmethod
-    def _weighted_moving_avg(close_series: pd.Series, window: int) -> pd.Series:
+    def _weighted_moving_avg(self, close_series: pd.Series, window: int) -> pd.Series:
         """
         Calculate weights to create weighted moving average values.
         """
@@ -155,16 +158,19 @@ class DataCollector:
         normalized_data = scaler.fit_transform(data_array)
 
         # Recreate the DataFrame with the normalized data
-        self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
+        self.norm_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
 
     def _backfill_data(self):
         """
         Backfills cells that do not have a value.
         """
-        for column in self.norm_data_df.columns:
-            self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='linear')
+        for column in self.norm_df.columns:
+            self.norm_df[column] = self.norm_df[column].interpolate(method='linear')
 
-    def prepare_and_calculate_data(self) -> pd.DataFrame:
+        self.norm_df = self.norm_df.fillna(method='bfill').fillna(method='ffill').fillna(0)
+        print("data_filled", self.norm_df.head())
+
+    def prepare_and_calculate_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
         """
@@ -173,7 +179,9 @@ class DataCollector:
         self._normalize_data()
         self._backfill_data()
 
-        return self.norm_data_df
+        # Convert the normalized dataframe to a tensor
+        # norm_reshaped = self.norm_df.values.reshape(self.norm_df[0], 1, self.norm_df[1])
+        self.data_tensor = torch.tensor(self.norm_df.values, dtype=torch.float32)
 
 
 if __name__ == '__main__':
