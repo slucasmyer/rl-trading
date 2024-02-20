@@ -24,8 +24,8 @@ class DataCollector:
         """
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
-        self.data_df.index = pd.to_datetime(
-            self.data_df.index)  # added this because of an issue in the _backfill_data method that required a datetime/numeric index
+        self.data_df.index = pd.to_datetime(self.data_df.index)  # added this because of an issue in the
+        # _backfill_data method that required a datetime/numeric index
         self.data_df = self.data_df.dropna()
         self.closing_prices = self.data_df["close"]
 
@@ -167,6 +167,7 @@ class DataCollector:
         for column in self.norm_df.columns:
             self.norm_df[column] = self.norm_df[column].interpolate(method='linear')
 
+        # Catches any remaining NaN cells
         self.norm_df = self.norm_df.fillna(method='bfill').fillna(method='ffill').fillna(0)
         print("data_filled", self.norm_df.head())
 
@@ -180,7 +181,6 @@ class DataCollector:
         self._backfill_data()
 
         # Convert the normalized dataframe to a tensor
-        # norm_reshaped = self.norm_df.values.reshape(self.norm_df[0], 1, self.norm_df[1])
         self.data_tensor = torch.tensor(self.norm_df.values, dtype=torch.float32)
 
 
