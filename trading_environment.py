@@ -11,21 +11,22 @@ class TradingEnvironment:
     The model is used to make trading decisions based on the dataset.
     Profit and drawdown are calculated based on the trading decisions.
     """
+
     def __init__(self, features, model, closing_prices):
-        self.features = features # The dataset
-        self.model = model # The model
+        self.features = features  # The dataset
+        self.model = model  # The model
         self.closing_prices = closing_prices
 
-        self.initial_balance = 100_000.00 # Initial balance
-        self.balance = self.initial_balance # Initial balance
-        self.max_balance = self.initial_balance # Max profit
-        self.drawdown = 0.00 # Drawdown
-        self.shares_owned = 0 # Shares owned
-        self.balances = defaultdict(list) # Balances over time
-        self.drawdowns = defaultdict(list) # Drawdowns over time
-        self.stop_loss_triggered = defaultdict(list) # Stop loss triggered over time
+        self.initial_balance = 100_000.00  # Initial balance
+        self.balance = self.initial_balance  # Initial balance
+        self.max_balance = self.initial_balance  # Max profit
+        self.drawdown = 0.00  # Drawdown
+        self.shares_owned = 0  # Shares owned
+        self.balances = defaultdict(list)  # Balances over time
+        self.drawdowns = defaultdict(list)  # Drawdowns over time
+        self.stop_loss_triggered = defaultdict(
+            list)  # Stop loss triggered over time
 
-        
     def simulate_trading(self):
         """
         Currently the core of this class.
@@ -34,17 +35,20 @@ class TradingEnvironment:
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
         """
-        self.balance = self.initial_balance # Reset profit for evaluation of new individual
-        self.max_balance = self.max_balance # Max profit
-        self.drawdown = 0.00 # Reset drawdown for evaluation of new individual
+        self.balance = self.initial_balance  # Reset profit for evaluation of new individual
+        self.max_balance = self.max_balance  # Max profit
+        self.drawdown = 0.00  # Reset drawdown for evaluation of new individual
         # Simulate trading over the dataset
         for i in range(len(self.features)):
-          
-            feature_vector = self.features[i:i+1] # Get the feature vector for the current day
 
-            feature_vector = feature_vector.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+            # Get the feature vector for the current day
+            feature_vector = self.features[i:i+1]
 
-            decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
+            feature_vector = feature_vector.to(torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu"))
+
+            # 0=buy, 1=hold, 2=sell
+            decision = self.model(feature_vector).argmax().item()
 
             current_price = self.closing_prices.iloc[i]
             print(f"Decision: {decision}, Current price: {current_price}")
@@ -53,17 +57,19 @@ class TradingEnvironment:
             #   elif decision == 2:  # Sell
             #       self.profit += self.data['close'][i]
             if decision == 0 and self.balance >= current_price:  # Buy
-                self.shares_owned += self.balance // current_price
-                self.balance -= current_price * self.shares_owned
-                
+                shares_added = self.balance // current_price
+                self.balance -= current_price * shares_added
+                self.shares_owned += shares_added
+
             elif decision == 2 and self.shares_owned > 0:  # Sell
                 self.balance += current_price * self.shares_owned
                 self.shares_owned = 0
-          
+
         # Update max_profit and drawdown
         self.max_balance = max(self.max_balance, self.balance)
         self.drawdown = min(self.drawdown, self.balance - self.max_balance)
-        print(f"Profit: {self.balance - 100_000.00}, Drawdown: {self.drawdown}")
+        print(
+            f"Profit: {self.balance - 100_000.00}, Drawdown: {self.drawdown}")
         sleep(1)
         return self.balance - 100_000.00, self.drawdown
 
@@ -78,13 +84,12 @@ def preprocess_data(data, columns_to_drop=[]):
     # Drop columns
     if columns_to_drop:
         data = data.drop(columns=columns_to_drop)
-    
+
     # Fill NaN values
     data_filled = data.fillna(method='bfill').fillna(method='ffill').fillna(0)
     print("data_filled", data_filled.head())
-    
+
     # Convert the DataFrame to a tensor
     features_tensor = torch.tensor(data_filled.values, dtype=torch.float32)
-    
-    return features_tensor
 
+    return features_tensor
