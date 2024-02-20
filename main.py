@@ -83,4 +83,4 @@ if __name__ == '__main__':
 
     # We will want to save the best policy network to disk
     # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
-    best_policy_network = None if res.pop is None else res.pop.get("X")[0]
+    best_policy_network = None if res.pop is None else res.pop.get("X")[10]

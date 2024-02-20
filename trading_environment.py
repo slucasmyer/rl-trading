@@ -15,12 +15,13 @@ class TradingEnvironment:
         self.data = data # The dataset
         self.model = model # The model
         self.features = preprocess_data(self.data) # Preprocessed data
-        self.balance = 100_000.00 # Initial balance
-        self.profit = 0.00 # Profit
-        self.max_profit = 0.00 # Max profit
+        self.initial_balance = 100_000.00 # Initial balance
+        self.balance = self.initial_balance # Initial balance
+        self.max_balance = self.initial_balance # Max profit
         self.drawdown = 0.00 # Drawdown
         self.shares_owned = 0 # Shares owned
         self.balances = defaultdict(list) # Balances over time
+        self.drawdowns = defaultdict(list) # Drawdowns over time
         self.stop_loss_triggered = defaultdict(list) # Stop loss triggered over time
 
         
@@ -32,8 +33,8 @@ class TradingEnvironment:
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
         """
-        self.profit = 0.00 # Reset profit for evaluation of new individual
-        self.max_profit = 0.00 # Max profit
+        self.balance = self.initial_balance # Reset profit for evaluation of new individual
+        self.max_balance = self.max_balance # Max profit
         self.drawdown = 0.00 # Reset drawdown for evaluation of new individual
         # Simulate trading over the dataset
         for i in range(len(self.features)):
@@ -59,11 +60,11 @@ class TradingEnvironment:
                 self.shares_owned = 0
           
         # Update max_profit and drawdown
-        self.max_profit = max(self.max_profit, self.profit)
-        self.drawdown = min(self.drawdown, self.profit - self.max_profit)
-        print(f"Profit: {self.profit}, Drawdown: {self.drawdown}")
+        self.max_balance = max(self.max_balance, self.balance)
+        self.drawdown = min(self.drawdown, self.balance - self.max_balance)
+        print(f"Profit: {self.balance - 100_000.00}, Drawdown: {self.drawdown}")
         sleep(1)
-        return self.profit, self.drawdown
+        return self.balance - 100_000.00, self.drawdown
 
 
 def preprocess_data(data, columns_to_drop=[]):

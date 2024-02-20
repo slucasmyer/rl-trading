@@ -44,15 +44,14 @@ class TradingProblem(ElementwiseProblem):
         
         *** When stop-loss added we'll need to pop the last gene and return it to set the stop-loss value in the environment ***
         """
-        model = self.network # `self.network` is our PolicyNetwork instance
         idx = 0 # Starting index in the parameter vector
         new_state_dict = {} # New state dictionary to load into the model
-        for name, param in model.named_parameters(): # Iterate over each layer's weights and biases in the model
+        for name, param in self.network.named_parameters(): # Iterate over each layer's weights and biases in the model
             num_param = param.numel() # Compute the number of elements in this layer
             param_values = params[idx:idx + num_param] # Extract the corresponding part of `params`
             param_values = param_values.reshape(param.size()) # Reshape the extracted values into the correct shape for this layer
             param_values = Tensor(param_values) # Convert to the appropriate tensor
             new_state_dict[name] = param_values # Add to the new state dictionary
             idx += num_param # Update the index
-        model.load_state_dict(new_state_dict) # Load the new state dictionary into the model
+        self.network.load_state_dict(new_state_dict) # Load the new state dictionary into the model
 
