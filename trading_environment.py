@@ -12,13 +12,13 @@ class TradingEnvironment:
     Profit and drawdown are calculated based on the trading decisions.
     """
 
-    def __init__(self, features, model, closing_prices):
+    def __init__(self, features, model, closing_prices, max_gen, pop_size):
         self.features = features  # The dataset
         self.model = model  # The model
         self.closing_prices = closing_prices
 
         self.initial_balance = 100_000.00  # Initial balance
-        self.balance = self.initial_balance  # Initial balance
+        self.balance = self.initial_balance  # Balance
         self.max_balance = self.initial_balance  # Max profit
         self.drawdown = 0.00  # Drawdown
         self.shares_owned = 0  # Shares owned
@@ -26,6 +26,8 @@ class TradingEnvironment:
         self.drawdowns = defaultdict(list)  # Drawdowns over time
         self.stop_loss_triggered = defaultdict(
             list)  # Stop loss triggered over time
+        self.max_gen = max_gen  # Used to structure dicts
+        self.pop_size = pop_size  # Used to structure dicts
 
     def simulate_trading(self):
         """
