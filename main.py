@@ -26,12 +26,12 @@ if __name__ == '__main__':
     Can be run in a python notebook or as a standalone script.
     """
 
-    # Load the data (columns_to_drop listed just to highlight where that ability is)
-    data_collector = DataCollector(data_df=pd.read_csv(Path("./training_tqqq.csv")), columns_to_drop=[],)
+    # Load the data
+    data_collector = DataCollector(data_df=pd.read_csv(Path("./training_tqqq.csv")))
 
-    # Prepare and calculate the data
-    data_collector.prepare_and_calculate_data()
-    print("processed_data (main)", data_collector.norm_df.head())
+    # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
+    data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
+    print("processed_data (main)", data_collector.data_df.head())
 
     # Get the input shape
     input_shape = data_collector.data_tensor.shape[1]
