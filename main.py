@@ -26,6 +26,10 @@ if __name__ == '__main__':
     Can be run in a python notebook or as a standalone script.
     """
 
+    # Hyperparameters
+    n_pop = 100
+    n_gen = 50
+    
     # Load the data
     data_collector = DataCollector(data_df=pd.read_csv(Path("./training_tqqq.csv")))
 
@@ -55,7 +59,7 @@ if __name__ == '__main__':
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Create the trading environment
-    trading_env = TradingEnvironment(data_collector.data_tensor, network, data_collector.closing_prices)
+    trading_env = TradingEnvironment(data_collector.data_tensor, network, data_collector.closing_prices, n_gen, n_pop)
 
     # initialize the thread pool and create the runner for ElementwiseProblem parallelization
     n_threads = 4
@@ -67,15 +71,15 @@ if __name__ == '__main__':
 
     # Create the algorithm
     algorithm = NSGA2(
-        pop_size=100,
+        pop_size = n_pop,
         sampling = FloatRandomSampling(),
-        crossover=SBX(prob=0.9, eta=15),
-        mutation=PM(prob=0.1, eta=20),
-        eliminate_duplicates=True
+        crossover = SBX(prob=0.9, eta=15),
+        mutation = PM(prob=0.1, eta=20),
+        eliminate_duplicates = True
     )
 
     # Run the optimization
-    res = minimize(problem, algorithm, ('n_gen', 50), verbose=True, seed=1)
+    res = minimize(problem, algorithm, ('n_gen', n_gen), verbose=True, seed=1)
 
     # Plot the results
     scatter = Scatter()
