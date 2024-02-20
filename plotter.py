@@ -23,11 +23,12 @@ def multi_objective_scatter(profit_data: dict, drawdown_data: dict, show: bool =
         if len(profit_data) > 1:
             plt.legend()
         plt.show()
+    plt.clf()
 
 
 def univariate_time_series(step_data: list, variable: str, gen_pop: tuple, show: bool = True) -> None:
     """
-    Expects list of daily measurements for variable associated with solution identified by gen_pop. 
+    Expects list of daily measurements for variable associated with individual identified by gen_pop. 
     """
     days = range(1, len(step_data) + 1)
     x = days
@@ -36,18 +37,28 @@ def univariate_time_series(step_data: list, variable: str, gen_pop: tuple, show:
     plt.xlabel("Day")
     plt.ylabel(variable)
     plt.xticks(days)
-    # Add gen and individual number?
     plt.savefig("Figures/%s_%s_time_series_gen_%s_pop_%s.png" %
                 (timestamp(), variable, gen_pop[0], gen_pop[1]))
     if show:
         plt.show()
+    plt.clf()
 
 
-def stop_loss_triggered(step_data: list, identifier: list) -> None:
+def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_pop: tuple, show: bool = True) -> None:
     """
-    Takes list of stop loss triggered step data for individual. 
+    Takes list of stop loss triggered events for individual. 
     """
-    pass
+    days = range(1, len(stop_loss_data) + 1)
+    plt.scatter(days, network_decision_data, c=stop_loss_data, cmap='RdYlGn')
+    plt.xlabel("Day")
+    plt.ylabel("Network Decision")
+    plt.xticks(days)
+    plt.yticks([0, 1, 2], ["buy", "hold", "sell"])
+    plt.savefig("Figures/%s_stop_losses_triggered_gen_%s_pop_%s.png" %
+                (timestamp(), gen_pop[0], gen_pop[1]))
+    if show:
+        plt.show()
+    plt.clf()
 
 
 def timestamp():
@@ -69,3 +80,9 @@ if __name__ == '__main__':
     multi_objective_scatter(profit2_data, drawdown2_data)
 
     univariate_time_series(profit1_data[1], "profit", (1, 2), False)
+
+    stop_loss_step_data = [0, 1, 0, 1, 0]
+
+    network_decision_data = [0, 1, 2, 1, 0]
+
+    stop_losses_triggered(stop_loss_step_data, network_decision_data, (1, 2))
