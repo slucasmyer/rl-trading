@@ -1,19 +1,25 @@
-from dataclasses import dataclass, field
-
+import torch
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 
-@dataclass
 class DataCollector:
-    # Raw values will be still be available after normalizing the data
-    data_df: pd.DataFrame = None
-    # Data for ML input
-    norm_data_df: pd.DataFrame = None
-    closing_prices: pd.DataFrame = None
-    windows: list[int] = field(default_factory=lambda: [16, 32, 64])
-    time_shifts: list[int] = field(default_factory=lambda: [2, 4, 6, 8, 10])
+    """
+    Represents an object that handles raw stock data. Executes stock metric calculations, drops unneeded columns, and
+    creates a tensor to be used in training or testing.
+    """
+    def __init__(self, data_df: pd.DataFrame):
+        # Input data
+        self.data_df = data_df
+        self.closing_prices = None
+
+        # Window size and time shift in days, used for calculations
+        self.windows = [16, 32, 64]
+        self.time_shifts = [2, 4, 6, 8, 10]
+
+        # Output tensor
+        self.data_tensor = None
 
     def _clean_data(self) -> None:
         """
@@ -21,8 +27,9 @@ class DataCollector:
         """
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
-        self.data_df.index = pd.to_datetime(self.data_df.index) # added this because of an issue in the _backfill_data method that required a datetime/numeric index
+        self.data_df.index = pd.to_datetime(self.data_df.index)
         self.data_df = self.data_df.dropna()
+        # Store closing prices
         self.closing_prices = self.data_df["close"]
 
     def _calculate_stock_measures(self):
@@ -46,8 +53,7 @@ class DataCollector:
             for time_shift in self.time_shifts:
                 self._create_avg_true_range_data(window, time_shift)
 
-    @staticmethod
-    def _weighted_moving_avg(close_series: pd.Series, window: int) -> pd.Series:
+    def _weighted_moving_avg(self, close_series: pd.Series, window: int) -> pd.Series:
         """
         Calculate weights to create weighted moving average values.
         """
@@ -155,36 +161,47 @@ class DataCollector:
         normalized_data = scaler.fit_transform(data_array)
 
         # Recreate the DataFrame with the normalized data
-        self.norm_data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
+        self.data_df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.data_df.columns)
 
     def _backfill_data(self):
         """
         Backfills cells that do not have a value.
         """
-        for column in self.norm_data_df.columns:
-            self.norm_data_df[column] = self.norm_data_df[column].interpolate(method='linear')
+        for column in self.data_df.columns:
+            self.data_df[column] = self.data_df[column].interpolate(method='linear')
 
-    def prepare_and_calculate_data(self) -> pd.DataFrame:
+        # Catches any remaining NaN cells
+        self.data_df = self.data_df.fillna(method='bfill').fillna(method='ffill').fillna(0)
+        print("data_filled", self.data_df.head())
+
+    def prepare_and_calculate_data(self, columns_to_drop: list = None) -> None:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
         """
+        if columns_to_drop is None:
+            columns_to_drop = []
         self._clean_data()
         self._calculate_stock_measures()
         self._normalize_data()
         self._backfill_data()
 
-        return self.norm_data_df
+        # Drop unwanted columns
+        self.data_df.drop(columns_to_drop, axis=1, inplace=True)
+
+        # Convert the normalized dataframe to a tensor
+        self.data_tensor = torch.tensor(self.data_df.values, dtype=torch.float32)
 
 
 if __name__ == '__main__':
     # Test class and methods
     data = pd.read_csv("training_tqqq.csv")
     # data = pd.read_csv("testing_tqqq.csv")
-    data_df = DataCollector(data)
-    prepared_data = data_df.prepare_and_calculate_data()
-    # Verify results as output
-    # print(prepared_data)
+    data_collector = DataCollector(data)
+    data_collector.prepare_and_calculate_data(['open', 'high'])
 
-    # To save the data
-    # prepared_data.to_csv("training_tqqq_prepared.csv")
-    # prepared_data.to_csv("testing_tqqq_prepared.csv")
+    # Test output
+    print(data_collector.data_df.head())
+
+    # To save dataframe as csv
+    # data_collector.data_df.to_csv("training_tqqq_prepared.csv")
+    # data_collector.data_df.to_csv("testing_tqqq_prepared.csv")

@@ -11,10 +11,11 @@ class TradingEnvironment:
     The model is used to make trading decisions based on the dataset.
     Profit and drawdown are calculated based on the trading decisions.
     """
-    def __init__(self, data, model):
-        self.data = data # The dataset
+    def __init__(self, features, model, closing_prices):
+        self.features = features # The dataset
         self.model = model # The model
-        self.features = preprocess_data(self.data) # Preprocessed data
+        self.closing_prices = closing_prices
+
         self.initial_balance = 100_000.00 # Initial balance
         self.balance = self.initial_balance # Initial balance
         self.max_balance = self.initial_balance # Max profit
@@ -45,7 +46,7 @@ class TradingEnvironment:
 
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
 
-            current_price = self.data['close'].iloc[i]
+            current_price = self.closing_prices.iloc[i]
             print(f"Decision: {decision}, Current price: {current_price}")
             #   if decision == 0:  # Buy
             #       self.profit -= self.data['close'][i]
