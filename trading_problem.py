@@ -61,3 +61,5 @@ class TradingProblem(ElementwiseProblem):
             idx += num_param # Update the index
         self.network.load_state_dict(new_state_dict) # Load the new state dictionary into the model
 
+
+    
