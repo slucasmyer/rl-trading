@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print("input_shape (main)", input_shape)
 
     # Define the dimensions of the policy network
-    dimensions = [input_shape, 10, 5, 10, 4, 10, 3]
+    dimensions = [input_shape, 64, 32, 16, 8, 4, 3]
 
     # Create the policy network
     network = PolicyNetwork(dimensions)
