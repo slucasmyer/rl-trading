@@ -14,7 +14,7 @@ from pymoo.visualization.scatter import Scatter
 
 
 from data_preparation import DataCollector
-from trading_problem import TradingProblem
+from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
 
@@ -78,14 +78,41 @@ if __name__ == '__main__':
         eliminate_duplicates = True
     )
 
+    performance_logger = PerformanceLogger()
+
     # Run the optimization
-    res = minimize(problem, algorithm, ('n_gen', n_gen), verbose=True, seed=1)
+    res = minimize(
+        problem,
+        algorithm,
+        ('n_gen', n_gen),
+        callback=performance_logger,
+        verbose=True,
+        seed=1
+    )
 
     # Plot the results
-    scatter = Scatter()
-    scatter.add(res.F, color="red")
-    scatter.show()
+    results_plot = Scatter()
+    results_plot.reset()
+    results_plot.add(res.F, color="red")
+    results_plot.show()
     plt.show()
+
+    history = pd.DataFrame(performance_logger.history)
+    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
+    history.to_csv(f"Figures/optimization_history_{date_time}.csv")
+
+    ojbectives_history = Scatter()
+    ojbectives_history.reset()
+    ojbectives_history.add(history["objectives"].values, color="blue")
+    ojbectives_history.show()
+    plt.show()
+
+    best_policy_history = Scatter()
+    best_policy_history.reset()
+    best_policy_history.add(history["best"].values, color="green")
+    best_policy_history.show()
+    plt.show()
+
 
     # We will want to save the best policy network to disk
     # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(

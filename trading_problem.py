@@ -3,6 +3,7 @@ import pandas as pd
 from torch import Tensor
 from torch.nn import DataParallel
 from pymoo.core.problem import ElementwiseProblem
+from pymoo.core.callback import Callback
 
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
@@ -62,4 +63,21 @@ class TradingProblem(ElementwiseProblem):
         self.network.load_state_dict(new_state_dict) # Load the new state dictionary into the model
 
 
-    
+
+
+class PerformanceLogger(Callback):
+    def __init__(self):
+        super().__init__()
+        self.history = []
+
+    def notify(self, algorithm):
+        F = algorithm.pop.get("F") # The objective values
+        X = algorithm.pop.get("X") # The decision variables
+        
+        # Log the objective values (and any additional information)
+        self.history.append({
+            "generation": algorithm.n_gen,
+            "objectives": F.copy(),
+            "decision_variables": X.copy(),
+            "best": F.min(),
+        })

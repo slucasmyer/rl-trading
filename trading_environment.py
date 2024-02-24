@@ -26,8 +26,7 @@ class TradingEnvironment:
         self.balances = defaultdict(list)  # Balances over time
         self.drawdowns = defaultdict(list)  # Drawdowns over time
         self.decisions = defaultdict(list) # Decisions over time
-        self.stop_loss_triggered = defaultdict(
-            list)  # Stop loss triggered over time
+        self.stop_loss_triggered = defaultdict(list)  # Stop loss triggered over time
         
         self.max_gen = max_gen  # Used to structure dicts
         self.pop_size = pop_size  # Used to structure dicts
