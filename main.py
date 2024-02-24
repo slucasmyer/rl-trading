@@ -92,7 +92,6 @@ if __name__ == '__main__':
 
     # Plot the results
     results_plot = Scatter()
-    results_plot.reset()
     results_plot.add(res.F, color="red")
     results_plot.show()
     plt.show()
@@ -102,13 +101,11 @@ if __name__ == '__main__':
     history.to_csv(f"Figures/optimization_history_{date_time}.csv")
 
     ojbectives_history = Scatter()
-    ojbectives_history.reset()
     ojbectives_history.add(history["objectives"].values, color="blue")
     ojbectives_history.show()
     plt.show()
 
     best_policy_history = Scatter()
-    best_policy_history.reset()
     best_policy_history.add(history["best"].values, color="green")
     best_policy_history.show()
     plt.show()
