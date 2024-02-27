@@ -66,7 +66,7 @@ class Plotter():
         """
         Expects lists of profit and drawdown data for a population. 
         """
-        fig, ax = self.create_fig_ax(title, xlabel, str, ylabel)
+        fig, ax = self.create_fig_ax(title, xlabel, ylabel)
         scatter = ax.scatter(profit_data, drawdown_data)
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         plt.savefig(f"Figures/{timestamp}_scatter.png")
