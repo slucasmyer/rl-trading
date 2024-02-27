@@ -3,6 +3,8 @@ import matplotlib
 import datetime as dt
 matplotlib.use('TkAgg')
 
+# TO-DO: adjust for use with percentages instead of flat dollar amounts. Make clearer what kind of data is expected.
+
 class Plotter():
 
     def __init__(self, max_gen):
@@ -12,7 +14,7 @@ class Plotter():
         self.scatters = []
         self.annotations = []
 
-    def create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit (dollars)", ylabel: str = "Drawdown (dollars)") -> tuple:
+    def create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> tuple:
         """
         Returns base fig/ax for plots.
         """
@@ -65,14 +67,14 @@ class Plotter():
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-    def create_standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit (dollars)", ylabel: str = "Drawdown (dollars)") -> None:
+    def create_standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> None:
         """
         Creates a standard non-interactive scatter for an undifferentiated group of chromosomes. 
         """
         fig, ax = self.create_fig_ax(title, xlabel, ylabel)
         scatter = ax.scatter(profit_data, drawdown_data)
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        plt.savefig(f"Figures/{timestamp}_scatter.png")
+        plt.savefig(f"Figures/{timestamp}_{title}_scatter.png")
 
     def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
         """
