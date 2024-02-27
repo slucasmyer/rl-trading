@@ -13,6 +13,9 @@ class Plotter():
         self.annotations = []
 
     def create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit (dollars)", ylabel: str = "Drawdown (dollars)") -> tuple:
+        """
+        Returns base fig/ax for plots.
+        """
         fig, ax = plt.subplots()
         ax.spines['left'].set_linewidth(1)
         ax.spines['bottom'].set_linewidth(1)
@@ -25,7 +28,7 @@ class Plotter():
         
     def create_interactive_scatter(self) -> tuple:
         """
-        Creates a new figure appropriate for use as an interactive scatter plot.
+        Creates a figure appropriate for use as an interactive scatter plot.
         """
         fig, ax = self.create_fig_ax()
         ax.invert_xaxis()
@@ -62,9 +65,9 @@ class Plotter():
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-    def standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit (dollars)", ylabel: str = "Drawdown (dollars)") -> None:
+    def create_standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit (dollars)", ylabel: str = "Drawdown (dollars)") -> None:
         """
-        Expects lists of profit and drawdown data for a population. 
+        Creates a standard non-interactive scatter for an undifferentiated group of chromosomes. 
         """
         fig, ax = self.create_fig_ax(title, xlabel, ylabel)
         scatter = ax.scatter(profit_data, drawdown_data)
@@ -73,7 +76,7 @@ class Plotter():
 
     def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
         """
-        Takes list of stop loss triggered events for individual. 
+        Do we still need this one?
         """
         days = range(1, len(stop_loss_data) + 1)
         plt.scatter(days, network_decision_data, c=stop_loss_data, cmap='RdYlGn')
@@ -108,7 +111,6 @@ if __name__ == '__main__':
     plotter.update_interactive_scatter(profit_data_2, drawdown_data_2, 2)
 
     # plotter.stop_losses_triggered(stop_loss_step_data, network_decision_data, (1, 2))
-    
-    plotter.standard_scatter(profit_data_1, drawdown_data_1)
-    plotter.standard_scatter(profit_data_2, drawdown_data_2)
-    plotter.standard_scatter(profit_data_3, drawdown_data_3)
+    plotter.create_standard_scatter(profit_data_1, drawdown_data_1)
+    plotter.create_standard_scatter(profit_data_2, drawdown_data_2)
+    plotter.create_standard_scatter(profit_data_3, drawdown_data_3)
