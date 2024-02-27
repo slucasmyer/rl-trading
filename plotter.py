@@ -28,7 +28,7 @@ class Plotter():
         
     def create_interactive_scatter(self) -> tuple:
         """
-        Creates a figure appropriate for use as an interactive scatter plot.
+        Creates a figure appropriate for use as an interactive scatter plot (can click plotted points for individual ID and info).
         """
         fig, ax = self.create_fig_ax()
         ax.invert_xaxis()
@@ -48,7 +48,7 @@ class Plotter():
 
     def update_interactive_scatter(self, profit_data: list, drawdown_data: list, gen_id: int) -> None:
         """
-        Updates and redraws scatter plot with final profit and drawdown data for a generation of chromosomes.
+        Updates and redraws scatter plot with final profit and drawdown data for a color-coded generation of chromosomes.
         """
         fig, ax = self.interactive_scatter
         colormap = matplotlib.cm.plasma
@@ -60,7 +60,7 @@ class Plotter():
         for i, (x_coord, y_coord) in enumerate(zip(profit_data, drawdown_data)):
             annotation = ax.annotate(f"Gen: {gen_id}\nInd: {i+1}\nProfit: {profit_data[i]}\nDrawdown: {drawdown_data[i]}", xy=(x_coord, y_coord), xytext=(38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
             annotation.set_visible(False)
-            self.annotations[len(self.annotations)-1].append(annotation)
+            self.annotations[-1].append(annotation)
             
         fig.canvas.draw()
         fig.canvas.flush_events()
@@ -109,8 +109,10 @@ if __name__ == '__main__':
     # Test methods
     plotter.update_interactive_scatter(profit_data_1, drawdown_data_1, 1)
     plotter.update_interactive_scatter(profit_data_2, drawdown_data_2, 2)
+    plotter.update_interactive_scatter(profit_data_3, drawdown_data_3, 3)
 
-    # plotter.stop_losses_triggered(stop_loss_step_data, network_decision_data, (1, 2))
     plotter.create_standard_scatter(profit_data_1, drawdown_data_1)
     plotter.create_standard_scatter(profit_data_2, drawdown_data_2)
     plotter.create_standard_scatter(profit_data_3, drawdown_data_3)
+
+    # plotter.stop_losses_triggered(stop_loss_step_data, network_decision_data, (1, 2))
