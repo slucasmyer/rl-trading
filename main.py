@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     # Plot the results
     results_plot = Scatter()
-    results_plot.add(res.F, color="red")
+    results_plot.add(res.F, color="blue")
     results_plot.show()
     plt.show()
 
