@@ -1,6 +1,6 @@
 # Stock Market AI
 
-This is an artificial intellegence developed via PyTorch that simulates stock trading using the TQQQ(UltraPro QQQ) security. The agent was taught using reinforcement learning with training and testing data extracted from [Alpha Vantage's API](https://www.alphavantage.co/documentation/).
+This is an artificial intellegence developed via PyTorch that simulates stock trading using the TQQQ(UltraPro QQQ) security. The agent was taught using reinforcement learning with training and testing data extracted from [yahoo_fin](https://theautomatic.net/yahoo_fin-documentation/).
 
 The agent's goal is to maximize profit and minimize drawdown by simulating stock trade of the TQQQ with historical stock data from 2022-01-01 to 2023-12-31. Training data consists of using historical stock data from 2011-01-01 to 2021-12-31.
 
@@ -21,7 +21,7 @@ Data visualizations are shown at the end that displays profits and drawdowns as 
 - [Pandas](https://pandas.pydata.org/)
 - [MatPlotLib](https://matplotlib.org/)
 - [Google Colab](https://colab.google/)
-- [Alpha Vantage API](https://www.alphavantage.co/documentation/)
+- [yahoo_fin](https://theautomatic.net/yahoo_fin-documentation/)
 
 # Workflow
 
@@ -35,13 +35,14 @@ The PolicyNetwork object then gets instantiated. There are checks in place to se
 
 The training and or testing begins with a call to minimize() from the PyMoo module. This function utilizes all of the instiatited objects mentioned above for the learning to begin. At the end, the results are plotted.
 
-# alpha_vantage_final.py
+# yahoo_fin_data.py
 
-The script used to extract historical price data for the TQQQ. A call is made to the Alpha Vantage API, which contains historical daily high price, low price, opening price, closing price, and volume values of the TQQQ throughout its entire history.
+The script used to extract historical price data for the TQQQ. A call is made to the Yahoo! Finance API, which contains historical daily high price, low price, opening price, closing price, and volume values of the TQQQ throughout its entire history.
 
-The API call returns a CSV, which is then parsed and written into two seperate CSVs. The two seperate CSVs are for testing data, called testing_tqqq.csv and training data, called training_tqqq.csv.The testing_tqqq CSV file contains the historical data from 2022-2023 and the training_tqqq CSV file contains the historical data from 2011-2021.
+The API call returns a Pandas dataframe containing this data. The "ticker" column is dropped, as that column is not necessary and certain column names are
+changed for compatiblility with data_preperation.py.
 
-CSVs are saved to the destination path provided by the user.
+CSVs are saved in the same directory as yahoo_fin_data.py if the user decides to make the optional parameter "bool" equal to true.
 
 # data_preparation.py
 
