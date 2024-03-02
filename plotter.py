@@ -10,6 +10,7 @@ class Plotter():
 
     def __init__(self):
         plt.ion()
+        plt.style.use('ggplot')
         self.interactive_scatter = self.create_interactive_scatter()
         self.scatters = []
         self.annotations = []
@@ -47,7 +48,6 @@ class Plotter():
                     annotation = self.annotations[counter][ind]
                     visibility = not annotation.get_visible()
                     annotation.set_visible(visibility)
-                    event.canvas.draw_idle()
                     break
         fig.canvas.mpl_connect("pick_event", on_pick)
         return (fig, ax)
@@ -59,7 +59,7 @@ class Plotter():
         fig, ax = self.interactive_scatter
         colormap = matplotlib.cm.plasma
         scatter = ax.scatter(profit_data, drawdown_data,
-                             color=colormap(gen_id / 50), picker=True)
+                             color=colormap(gen_id / 5), picker=True)
         self.scatters.append(scatter)
         self.annotations.append([])
 
@@ -68,9 +68,6 @@ class Plotter():
                 38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
             annotation.set_visible(False)
             self.annotations[-1].append(annotation)
-
-        fig.canvas.draw()
-        fig.canvas.flush_events()
 
     def create_standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> None:
         """
