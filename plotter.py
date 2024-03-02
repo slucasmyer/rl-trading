@@ -3,8 +3,6 @@ import matplotlib
 import datetime as dt
 matplotlib.use('TkAgg')
 
-# TO-DO: adjust for use with percentages instead of flat dollar amounts. Make clearer what kind of data is expected.
-
 
 class Plotter():
 
@@ -49,6 +47,7 @@ class Plotter():
                     visibility = not annotation.get_visible()
                     annotation.set_visible(visibility)
                     break
+                
         fig.canvas.mpl_connect("pick_event", on_pick)
         return (fig, ax)
 
@@ -64,14 +63,14 @@ class Plotter():
         self.annotations.append([])
 
         for i, (x_coord, y_coord) in enumerate(zip(profit_data, drawdown_data)):
-            annotation = ax.annotate(f"Gen: {gen_id}\nInd: {i+1}\nProfit: {profit_data[i]}\nDrawdown: {drawdown_data[i]}", xy=(x_coord, y_coord), xytext=(
+            annotation = ax.annotate(f"Gen ID: {gen_id}\nPop ID: {i+1}\nProfit: {profit_data[i]}\nDrawdown: {drawdown_data[i]}", xy=(x_coord, y_coord), xytext=(
                 38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
             annotation.set_visible(False)
             self.annotations[-1].append(annotation)
 
     def create_standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> None:
         """
-        Creates a standard non-interactive scatter for an undifferentiated group of chromosomes. 
+        Creates a standard non-interactive scatter for an undifferentiated group of chromosomal data. 
         """
         fig, ax = self.create_fig_ax(title, xlabel, ylabel)
         scatter = ax.scatter(profit_data, drawdown_data)
@@ -80,7 +79,7 @@ class Plotter():
 
     def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
         """
-        Do we still need this one?
+        Delete? 
         """
         days = range(1, len(stop_loss_data) + 1)
         plt.scatter(days, network_decision_data,
