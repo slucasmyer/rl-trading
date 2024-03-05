@@ -3,18 +3,19 @@ import matplotlib
 import datetime as dt
 matplotlib.use('TkAgg')
 
+# May be easiest to use this in performance logger?
 
 class Plotter():
 
     def __init__(self):
         plt.ion()
         plt.style.use('ggplot')
-        self.interactive_scatter = self.create_interactive_scatter()
+        self.interactive_scatter = self._create_interactive_scatter()
         self.scatters = []
         self.annotations = []
         self.scatter_counter = 0
 
-    def create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown", are_percentages: bool = True) -> tuple:
+    def _create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown", are_percentages: bool = True) -> tuple:
         """
         Returns base fig/ax for plots.
         """
@@ -32,13 +33,12 @@ class Plotter():
         plt.pause(0.1)
         return (fig, ax)
 
-    def create_interactive_scatter(self) -> tuple:
+    def _create_interactive_scatter(self) -> tuple:
         """
         Creates a figure appropriate for use as an interactive scatter plot (can click plotted points for individual ID and info).
         """
-        fig, ax = self.create_fig_ax()
-        ax.invert_xaxis()
-
+        fig, ax = self._create_fig_ax()
+        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.1)
         def on_pick(event):
             counter = -1
             for scatter in self.scatters:
@@ -66,7 +66,7 @@ class Plotter():
         self.annotations.append([])
 
         for i, (x_coord, y_coord) in enumerate(zip(profit_data, drawdown_data)):
-            annotation = ax.annotate(f"Gen ID: {gen_id}\nPop ID: {i+1}\nProfit: {profit_data[i]}\nDrawdown: {drawdown_data[i]}", xy=(x_coord, y_coord), xytext=(
+            annotation = ax.annotate(f"Gen ID: {gen_id}\nPop ID: {i+1}\nProfit: {int(profit_data[i])}\nDrawdown: {int(drawdown_data[i])}", xy=(x_coord, y_coord), xytext=(
                 38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
             annotation.set_visible(False)
             self.annotations[-1].append(annotation)
@@ -76,7 +76,7 @@ class Plotter():
         """
         Creates a standard non-interactive scatter for an undifferentiated group of chromosomal data. 
         """
-        fig, ax = self.create_fig_ax(title, xlabel, ylabel)
+        fig, ax = self._create_fig_ax(title, xlabel, ylabel)
         scatter = ax.scatter(profit_data, drawdown_data)
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         plt.savefig(f"Figures/{timestamp}_{title}_scatter.png")
