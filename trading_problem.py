@@ -67,11 +67,10 @@ class TradingProblem(ElementwiseProblem):
 
 
 class PerformanceLogger(Callback):
-    def __init__(self, max_gen):
+    def __init__(self):
         super().__init__()
         self.history = []
         self.plotter = Plotter()
-        self.max_gen = max_gen
 
     def notify(self, algorithm):
         F = algorithm.pop.get("F") # The objective values
