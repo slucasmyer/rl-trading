@@ -12,6 +12,7 @@ class Plotter():
         self.interactive_scatter = self.create_interactive_scatter()
         self.scatters = []
         self.annotations = []
+        self.scatter_counter = 0
 
     def create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown", are_percentages: bool = True) -> tuple:
         """
@@ -28,6 +29,7 @@ class Plotter():
         if are_percentages:
             ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
             ax.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+        plt.pause(0.1)
         return (fig, ax)
 
     def create_interactive_scatter(self) -> tuple:
@@ -47,7 +49,7 @@ class Plotter():
                     visibility = not annotation.get_visible()
                     annotation.set_visible(visibility)
                     break
-                
+
         fig.canvas.mpl_connect("pick_event", on_pick)
         return (fig, ax)
 
@@ -58,7 +60,8 @@ class Plotter():
         fig, ax = self.interactive_scatter
         colormap = matplotlib.cm.plasma
         scatter = ax.scatter(profit_data, drawdown_data,
-                             color=colormap(gen_id / 5), picker=True)
+                             color=colormap((self.scatter_counter % 5) / 5), picker=True)
+        self.scatter_counter += 1
         self.scatters.append(scatter)
         self.annotations.append([])
 
@@ -67,6 +70,7 @@ class Plotter():
                 38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
             annotation.set_visible(False)
             self.annotations[-1].append(annotation)
+        plt.pause(0.1)
 
     def create_standard_scatter(self, profit_data: list, drawdown_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> None:
         """
@@ -77,20 +81,20 @@ class Plotter():
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         plt.savefig(f"Figures/{timestamp}_{title}_scatter.png")
 
-    def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
-        """
-        Delete? 
-        """
-        days = range(1, len(stop_loss_data) + 1)
-        plt.scatter(days, network_decision_data,
-                    c=stop_loss_data, cmap='RdYlGn')
-        plt.xlabel("Day")
-        plt.ylabel("Network Decision")
-        plt.xticks(days)
-        plt.yticks([0, 1, 2], ["buy", "hold", "sell"])
-        timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        plt.savefig(
-            f"Figures/{timestamp}_stop_losses_triggered_gen{gen_id}_pop_{pop_id}.png")
+    # def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
+    #     """
+    #     Delete? 
+    #     """
+    #     days = range(1, len(stop_loss_data) + 1)
+    #     plt.scatter(days, network_decision_data,
+    #                 c=stop_loss_data, cmap='RdYlGn')
+    #     plt.xlabel("Day")
+    #     plt.ylabel("Network Decision")
+    #     plt.xticks(days)
+    #     plt.yticks([0, 1, 2], ["buy", "hold", "sell"])
+    #     timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    #     plt.savefig(
+    #         f"Figures/{timestamp}_stop_losses_triggered_gen{gen_id}_pop_{pop_id}.png")
 
 
 if __name__ == '__main__':
