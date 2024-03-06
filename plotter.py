@@ -84,7 +84,7 @@ class Plotter():
         
     # def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
     #     """
-    #     Delete? 
+    #     Delete? we shall see
     #     """
     #     days = range(1, len(stop_loss_data) + 1)
     #     plt.scatter(days, network_decision_data,
