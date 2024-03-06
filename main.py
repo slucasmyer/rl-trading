@@ -17,6 +17,8 @@ from data_preparation import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
+import sys
+print(sys.path)
 from yahoo_fin_data import get_data
 
 if __name__ == '__main__':
@@ -31,7 +33,7 @@ if __name__ == '__main__':
     n_gen = 50
     
     # Get and load data
-    stock_df = get_data("TQQQ")
+    stock_df = pd.DataFrame(get_data("TQQQ"))
     data_collector = DataCollector(data_df=stock_df)
 
     # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
