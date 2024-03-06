@@ -85,5 +85,5 @@ class PerformanceLogger(Callback):
         })
         
         # Plot objective data for each generation
-        profits, drawdowns = zip(*F)
-        self.plotter.update_interactive_convergence_scatter(profits, drawdowns, algorithm.n_gen)
+        profits, drawdowns, num_trades = zip(*F)
+        self.plotter.update_interactive_convergence_scatter(profits, drawdowns, num_trades, algorithm.n_gen)
