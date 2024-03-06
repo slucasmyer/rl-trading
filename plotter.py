@@ -53,7 +53,7 @@ class Plotter():
         fig.canvas.mpl_connect("pick_event", on_pick)
         return (fig, ax)
 
-    def update_interactive_convergence_scatter(self, x_data: list, y_data: list, gen_id: int) -> None:
+    def update_interactive_convergence_scatter(self, x_data: list, y_data: list, num_trades: list, gen_id: int) -> None:
         """
         Updates and redraws scatter plot with data for a color-coded generation of chromosomes.
         """
