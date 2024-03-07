@@ -73,14 +73,11 @@ class TradingEnvironment:
                 self.shares_owned = 0
                 self.num_trades += 1
 
+            #  most of the bugs were hiding here
             current_portfolio_value = self.balance + (self.shares_owned * current_price)
-
             self.max_balance = max(self.max_balance, current_portfolio_value)
-
             current_drawdown = self.max_balance - current_portfolio_value if current_portfolio_value < self.max_balance else 0.00
-
             drawdown_pct = (current_drawdown / self.max_balance) * 100
-
             self.drawdown = max(self.drawdown, drawdown_pct)
 
         
@@ -93,18 +90,10 @@ class TradingEnvironment:
         scaled_profit = raw_profit / self.initial_balance
         profit_pct = scaled_profit * 100
         self.profit = profit_pct
-        # raw_drawdown = self.drawdown
-        # scaled_drawdown = raw_drawdown / self.initial_balance
-        # drawdown_pct = scaled_drawdown * 100
-        # self.profit = ((self.balance - self.initial_balance) / self.initial_balance) * 100
-        # self.drawdown = (self.drawdown / self.initial_balance)
-        print("-----------------------------------")
-        # print(f"raw_profit: {raw_profit}, scaled_profit: {scaled_profit}, profit_pct: {profit_pct}")
-        # print(f"raw_drawdown: {self.drawdown}, scaled_drawdown: {scaled_drawdown}, drawdown_pct: {drawdown_pct}")
         print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
-        print("-----------------------------------")
+
         # sleep(0.5)
-        return self.profit, self.drawdown, -float(self.num_trades)
+        return self.profit, self.drawdown, float(self.num_trades)
 
 
 def preprocess_data(data, columns_to_drop=[]):

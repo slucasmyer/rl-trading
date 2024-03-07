@@ -45,7 +45,7 @@ class TradingProblem(ElementwiseProblem):
         profit, drawdown, num_trades = self.environment.simulate_trading(self.get_chromosome())  # Simulate trading
         # print(f"_evaluate Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}")
         # sleep(0.5)
-        out["F"] = np.array([profit, -drawdown, num_trades]) # Set the objectives
+        out["F"] = np.array([-profit, drawdown, -num_trades]) # Set the objectives
 
     def decode_model(self, params):
         """

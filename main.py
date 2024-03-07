@@ -123,21 +123,10 @@ if __name__ == '__main__':
         historia.append(row)
     history_df: pd.DataFrame = pd.DataFrame(columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"], data=historia)
     print("history_df", history_df.head())
-
-
-    # date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
-    # history.to_csv(f"Figures/optimization_history_{date_time}.csv")
-
-    # ojbectives_history = Scatter()
-    # ojbectives_history.add(history["objectives"].values, color="blue")
-    # ojbectives_history.show()
-    # plt.show()
-
-    # best_policy_history = Scatter()
-    # best_policy_history.add(history["best"].values, color="green")
-    # best_policy_history.show()
-    # plt.show()
-
+    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
+    history.to_csv(f"Output/performance_log/{date_time}.csv")
+    history_df.to_csv(f"Output/performance_log/{date_time}_avg.csv")
+    
 
     # We will want to save the best policy network to disk
     # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
@@ -145,7 +134,7 @@ if __name__ == '__main__':
     print("top_10", top_10)
 
     # use the video writer as a resource
-    with Recorder(Video("ga.mp4")) as rec:
+    with Recorder(Video("Assets/videos/ga.mp4")) as rec:
 
         # for each algorithm object in the history
         for entry in res.history:
