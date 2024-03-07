@@ -42,7 +42,6 @@ class TradingEnvironment:
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
         """
-        print(f"Chromosome (simulate_trading): {chromosome}")
         # Update current individual num and current gen num
         self.current_ind += 1
         if self.current_ind > self.pop_size:
@@ -92,6 +91,8 @@ class TradingEnvironment:
             self.shares_owned = 0
         self.profit = ((self.balance - self.initial_balance) / self.initial_balance) * 100
         self.drawdown = (self.drawdown / self.initial_balance) * 100
+        # print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
+        # sleep(0.5)
         return self.profit, self.drawdown, float(self.num_trades)
 
 
@@ -107,8 +108,7 @@ def preprocess_data(data, columns_to_drop=[]):
         data = data.drop(columns=columns_to_drop)
 
     # Fill NaN values
-    data_filled = data.fillna(method='bfill').fillna(method='ffill').fillna(0)
-    print("data_filled", data_filled.head())
+    data_filled = data.bfill().ffill().fillna(0)
 
     # Convert the DataFrame to a tensor
     features_tensor = torch.tensor(data_filled.values, dtype=torch.float32)

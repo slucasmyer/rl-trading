@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch.nn import DataParallel
@@ -11,6 +12,8 @@ from pymoo.optimize import minimize
 from multiprocessing.pool import ThreadPool
 from pymoo.core.problem import StarmapParallelization
 from pymoo.visualization.scatter import Scatter
+from pyrecorder.recorder import Recorder
+from pyrecorder.writers.video import Video
 
 
 from data_preparation import DataCollector
@@ -38,7 +41,7 @@ if __name__ == '__main__':
 
     # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
     data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
-    print("processed_data (main)", data_collector.data_df.head())
+    # print("processed_data (main)", data_collector.data_df.head())
 
     # Get the input shape
     input_shape = data_collector.data_tensor.shape[1]
@@ -90,6 +93,7 @@ if __name__ == '__main__':
         ('n_gen', n_gen),
         callback=performance_logger,
         verbose=True,
+        save_history=True,
         seed=1
     )
 
@@ -97,23 +101,61 @@ if __name__ == '__main__':
     results_plot = Scatter()
     results_plot.add(res.F, color="blue")
     results_plot.show()
-    plt.show()
 
-    history = pd.DataFrame(performance_logger.history)
-    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
-    history.to_csv(f"Figures/optimization_history_{date_time}.csv")
+    history: pd.DataFrame = pd.DataFrame(performance_logger.history)
+    generations = history["generation"].values
+    objectives = history["objectives"].values
+    decisions = history["decision_variables"].values
+    best = history["best"].values
+    
+    historia = []
+    for i in range(len(generations)):
+        avg_profit, avg_drawdown, avg_trades = 0, 0, 0
+        objs = objectives[i]
+        # objs = np.array(eval(objectives[i]))
+        for row in objs:
+            avg_profit += row[0]
+            avg_drawdown += row[1]
+            avg_trades += row[2]
+        avg_profit /= len(objs)
+        avg_drawdown /= len(objs)
+        avg_trades /= len(objs)
+        row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
+        historia.append(row)
+    history_df: pd.DataFrame = pd.DataFrame(columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"], data=historia)
+    print("history_df", history_df.head())
 
-    ojbectives_history = Scatter()
-    ojbectives_history.add(history["objectives"].values, color="blue")
-    ojbectives_history.show()
-    plt.show()
 
-    best_policy_history = Scatter()
-    best_policy_history.add(history["best"].values, color="green")
-    best_policy_history.show()
-    plt.show()
+    # date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
+    # history.to_csv(f"Figures/optimization_history_{date_time}.csv")
+
+    # ojbectives_history = Scatter()
+    # ojbectives_history.add(history["objectives"].values, color="blue")
+    # ojbectives_history.show()
+    # plt.show()
+
+    # best_policy_history = Scatter()
+    # best_policy_history.add(history["best"].values, color="green")
+    # best_policy_history.show()
+    # plt.show()
 
 
     # We will want to save the best policy network to disk
     # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
-    top_10 = None if res.pop is None else res.pop.get("X")[10]
+    top_10 = None if res.pop is None else res.pop.get("X")
+    print("top_10", top_10)
+
+    # use the video writer as a resource
+    with Recorder(Video("ga.mp4")) as rec:
+
+        # for each algorithm object in the history
+        for entry in res.history:
+            sc = Scatter(title=("Gen %s" % entry.n_gen))
+            sc.add(entry.pop.get("F"))
+            sc.add(entry.problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
+            sc.do()
+
+            # finally record the current visualization to the video
+            rec.record()
+
+    pool.close()

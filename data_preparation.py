@@ -172,8 +172,7 @@ class DataCollector:
             self.data_df[column] = self.data_df[column].interpolate(method='linear')
 
         # Catches any remaining NaN cells
-        self.data_df = self.data_df.fillna(method='bfill').fillna(method='ffill').fillna(0)
-        print("data_filled", self.data_df.head())
+        self.data_df = self.data_df.bfill().ffill().fillna(0)
 
     def prepare_and_calculate_data(self, columns_to_drop: list = []) -> None:
         """
@@ -188,9 +187,7 @@ class DataCollector:
 
         # Drop unwanted columns
         self.data_df.drop(columns_to_drop, axis=1, inplace=True)
-        print("data_shape", self.data_df.shape)
-        # print type of self.data_df.shape
-        print("type of data_shape", type(self.data_df.shape))
+        # print("data_shape", self.data_df.shape)
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.data_df.values, dtype=torch.float32)
 
@@ -203,7 +200,7 @@ if __name__ == '__main__':
     data_collector.prepare_and_calculate_data(['open', 'high'])
 
     # Test output
-    print(data_collector.data_df.head())
+    # print(data_collector.data_df.head())
 
     # To save dataframe as csv
     # data_collector.data_df.to_csv("training_tqqq_prepared.csv")

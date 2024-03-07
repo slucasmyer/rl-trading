@@ -4,7 +4,7 @@ from torch import Tensor
 from torch.nn import DataParallel
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.callback import Callback
-
+from time import sleep
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
 from plotter import Plotter
@@ -43,6 +43,8 @@ class TradingProblem(ElementwiseProblem):
         """
         self.decode_model(x) # Decode the individual's parameters into the policy network
         profit, drawdown, num_trades = self.environment.simulate_trading(self.get_chromosome())  # Simulate trading
+        # print(f"_evaluate Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}")
+        # sleep(0.5)
         out["F"] = np.array([profit, -drawdown, num_trades]) # Set the objectives
 
     def decode_model(self, params):
@@ -75,7 +77,7 @@ class PerformanceLogger(Callback):
     def notify(self, algorithm):
         F = algorithm.pop.get("F") # The objective values
         X = algorithm.pop.get("X") # The decision variables
-        
+        # print(f"notify F: {F}, X: {X}, best: {F.min()}")
         # Log the objective values (and any additional information)
         self.history.append({
             "generation": algorithm.n_gen,
