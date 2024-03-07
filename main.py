@@ -93,8 +93,7 @@ if __name__ == '__main__':
         ('n_gen', n_gen),
         callback=performance_logger,
         verbose=True,
-        save_history=True,
-        seed=1
+        save_history=True
     )
 
     # Plot the results
@@ -150,12 +149,13 @@ if __name__ == '__main__':
 
         # for each algorithm object in the history
         for entry in res.history:
-            sc = Scatter(title=("Gen %s" % entry.n_gen))
+            sc = Scatter(title=("Gen %s" % entry.n_gen), labels=["Profit", "Drawdown", "Trade Count"])
             sc.add(entry.pop.get("F"))
             sc.add(entry.problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
             sc.do()
 
             # finally record the current visualization to the video
             rec.record()
+        rec.close()
 
     pool.close()

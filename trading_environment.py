@@ -24,10 +24,6 @@ class TradingEnvironment:
         self.shares_owned = 0  # Shares owned
         self.profit: float = 0.00 # Profit percentage
         self.num_trades = 0  # Number of trades
-        self.balances = defaultdict(list)  # Balances over time
-        self.drawdowns = defaultdict(list)  # Drawdowns over time
-        self.decisions = defaultdict(list) # Decisions over time
-        self.stop_loss_triggered = defaultdict(list)  # Stop loss triggered over time
         
         self.max_gen = max_gen  # Used to structure dicts
         self.pop_size = pop_size  # Used to structure dicts
@@ -49,7 +45,7 @@ class TradingEnvironment:
             self.current_ind = 1
         
         self.balance = self.initial_balance  # Reset profit for evaluation of new individual
-        self.max_balance = self.max_balance  # Max profit
+        self.max_balance = self.balance  # Max profit
         self.drawdown = 0.00  # Reset drawdown for evaluation of new individual
         self.shares_owned = 0  # Reset shares owned for evaluation of new individual
         self.profit = 0.00  # Reset profit for evaluation of new individual
@@ -77,23 +73,38 @@ class TradingEnvironment:
                 self.shares_owned = 0
                 self.num_trades += 1
 
-            self.max_balance = max(self.max_balance, self.balance)
-            current_drawdown = self.balance + (self.shares_owned * current_price) - self.max_balance
-            self.drawdown = min(self.drawdown, current_drawdown)
+            current_portfolio_value = self.balance + (self.shares_owned * current_price)
 
-        self.balances[chromosome].append(self.balance)
-        self.drawdowns[chromosome].append(self.drawdown)
-        self.decisions[chromosome].append(decision)
-        self.stop_loss_triggered[chromosome].append(0)
+            self.max_balance = max(self.max_balance, current_portfolio_value)
+
+            current_drawdown = self.max_balance - current_portfolio_value if current_portfolio_value < self.max_balance else 0.00
+
+            drawdown_pct = (current_drawdown / self.max_balance) * 100
+
+            self.drawdown = max(self.drawdown, drawdown_pct)
+
         
         if self.shares_owned > 0:
             self.balance += self.shares_owned * self.closing_prices.iloc[-1]
             self.shares_owned = 0
-        self.profit = ((self.balance - self.initial_balance) / self.initial_balance) * 100
-        self.drawdown = (self.drawdown / self.initial_balance) * 100
-        # print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
+            self.num_trades += 1
+        
+        raw_profit = self.balance - self.initial_balance
+        scaled_profit = raw_profit / self.initial_balance
+        profit_pct = scaled_profit * 100
+        self.profit = profit_pct
+        # raw_drawdown = self.drawdown
+        # scaled_drawdown = raw_drawdown / self.initial_balance
+        # drawdown_pct = scaled_drawdown * 100
+        # self.profit = ((self.balance - self.initial_balance) / self.initial_balance) * 100
+        # self.drawdown = (self.drawdown / self.initial_balance)
+        print("-----------------------------------")
+        # print(f"raw_profit: {raw_profit}, scaled_profit: {scaled_profit}, profit_pct: {profit_pct}")
+        # print(f"raw_drawdown: {self.drawdown}, scaled_drawdown: {scaled_drawdown}, drawdown_pct: {drawdown_pct}")
+        print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
+        print("-----------------------------------")
         # sleep(0.5)
-        return self.profit, self.drawdown, float(self.num_trades)
+        return self.profit, self.drawdown, -float(self.num_trades)
 
 
 def preprocess_data(data, columns_to_drop=[]):
