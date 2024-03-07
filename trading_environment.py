@@ -90,7 +90,7 @@ class TradingEnvironment:
         scaled_profit = raw_profit / self.initial_balance
         profit_pct = scaled_profit * 100
         self.profit = profit_pct
-        print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
+        # print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
 
         # sleep(0.5)
         return self.profit, self.drawdown, float(self.num_trades)
