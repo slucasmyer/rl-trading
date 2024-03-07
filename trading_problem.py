@@ -7,7 +7,6 @@ from pymoo.core.callback import Callback
 from time import sleep
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
-from plotter import Plotter
 
 
 class TradingProblem(ElementwiseProblem):
@@ -69,10 +68,10 @@ class TradingProblem(ElementwiseProblem):
 
 
 class PerformanceLogger(Callback):
-    def __init__(self):
+    def __init__(self, queue):
         super().__init__()
         self.history = []
-        self.plotter = Plotter()
+        self.queue = queue
 
     def notify(self, algorithm):
         F = algorithm.pop.get("F") # The objective values
@@ -86,6 +85,6 @@ class PerformanceLogger(Callback):
             "best": F.min(),
         })
         
-        # Plot objective data for each generation
-        profits, drawdowns, num_trades = zip(*F)
-        self.plotter.update_interactive_convergence_scatter(profits, drawdowns, num_trades, algorithm.n_gen)
+        # Add objective data to queue for plotting
+        x_data, y_data = zip(*F) # Add z-data
+        self.queue.put((x_data, y_data, np.random.randint(500, size=len(y_data)))) # Replace last element with z-data

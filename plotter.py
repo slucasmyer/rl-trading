@@ -1,77 +1,74 @@
 import matplotlib.pyplot as plt
 import matplotlib
 import datetime as dt
-matplotlib.use('TkAgg')
+from mpl_toolkits.mplot3d import Axes3D
 
 # May be easiest to use this in performance logger? Maybe add a general scatter method with annotations?
 # May need better way to handle percentages since we're introducing another objective.
 
+
 class Plotter():
 
-    def __init__(self):
+    def __init__(self, queue, n_gen):
+        matplotlib.use('TkAgg')
         plt.ion()
         plt.style.use('ggplot')
+        self.queue = queue
+        self.scatter = None
         self.interactive_convergence_scatter = self._create_interactive_scatter()
-        self.scatters = []
-        self.annotations = []
-        self.scatter_counter = 0
+        self.n_gen = n_gen
 
-    def _create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown", are_percentages: bool = True) -> tuple:
+    def update_while_training(self):
+        current_generation = 1
+        while current_generation < self.n_gen:
+            plt.pause(1)
+            if not self.queue.empty():
+                x_data, y_data, z_data = self.queue.get()
+                self.update_interactive_convergence_scatter(
+                    x_data, y_data, z_data, current_generation)
+                current_generation += 1
+        plt.show(block=True)
+
+    def _create_fig_ax(self, title: str = "Generation", xlabel: str = "Profit", ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True, y_percentage: bool = True, z_percentage: bool = True) -> tuple:
         """
         Returns base fig/ax for plots.
         """
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig = plt.figure(figsize=(10, 6))
+        ax = fig.add_subplot(projection='3d')
         ax.spines['left'].set_linewidth(1)
         ax.spines['bottom'].set_linewidth(1)
         ax.spines['right'].set_color((.8, .8, .8))
         ax.spines['top'].set_color((.8, .8, .8))
-        ax.set_title(title, fontsize='x-large', weight='bold')
         ax.set_xlabel(xlabel, fontsize='large', fontstyle='italic')
         ax.set_ylabel(ylabel, fontsize='large', fontstyle='italic')
-        if are_percentages:
-            ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+        ax.set_zlabel(zlabel, fontsize='large', fontstyle='italic')
+        if x_percentage:
             ax.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
-        plt.pause(0.1)
+        if y_percentage:
+            ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+        if z_percentage:
+            ax.zaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
         return (fig, ax)
 
     def _create_interactive_scatter(self) -> tuple:
         """
         Creates a figure appropriate for use as an interactive scatter plot (can click plotted points for individual ID and info).
         """
-        fig, ax = self._create_fig_ax()
-        def on_pick(event):
-            counter = -1
-            for scatter in self.scatters:
-                counter += 1
-                if event.artist == scatter:
-                    ind = event.ind[0]
-                    annotation = self.annotations[counter][ind]
-                    visibility = not annotation.get_visible()
-                    annotation.set_visible(visibility)
-                    break
-
-        fig.canvas.mpl_connect("pick_event", on_pick)
+        fig, ax = self._create_fig_ax(z_percentage=False)
+        self.scatter = ax.scatter([], [])
         return (fig, ax)
 
-    def update_interactive_convergence_scatter(self, x_data: list, y_data: list, num_trades: list, gen_id: int) -> None:
+    def update_interactive_convergence_scatter(self, x_data: list, y_data: list, z_data: list, n_gen: int) -> None:
         """
         Updates and redraws scatter plot with data for a color-coded generation of chromosomes.
         """
+        self.scatter.remove()
         fig, ax = self.interactive_convergence_scatter
-        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.1)
+        ax.set_title(f"Generation {n_gen}", fontsize='x-large', weight='bold')
+        # plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.1)
         colormap = matplotlib.cm.plasma
-        scatter = ax.scatter(x_data, y_data,
-                             color=colormap((self.scatter_counter % 5) / 5), picker=True)
-        self.scatter_counter += 1
-        self.scatters.append(scatter)
-        self.annotations.append([])
-
-        for i, (x_coord, y_coord) in enumerate(zip(x_data, y_data)):
-            annotation = ax.annotate(f"Gen ID: {gen_id}\nPop ID: {i+1}\nProfit: {int(x_data[i])}\nDrawdown: {int(y_data[i])}", xy=(x_coord, y_coord), xytext=(
-                38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
-            annotation.set_visible(False)
-            self.annotations[-1].append(annotation)
-        plt.pause(0.1)
+        self.scatter = ax.scatter(x_data, y_data, z_data,
+                                  color=colormap((n_gen % 5) / 5))
 
     def create_standard_scatter(self, x_data: list, y_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> None:
         """
@@ -81,7 +78,7 @@ class Plotter():
         scatter = ax.scatter(x_data, y_data)
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         plt.savefig(f"Figures/{timestamp}_{title}_scatter.png")
-        
+
     # def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
     #     """
     #     Delete? we shall see
@@ -120,9 +117,12 @@ if __name__ == '__main__':
     plotter = Plotter()
 
     # Test methods
-    plotter.update_interactive_convergence_scatter(profit_data_1, drawdown_data_1, 1)
-    plotter.update_interactive_convergence_scatter(profit_data_2, drawdown_data_2, 2)
-    plotter.update_interactive_convergence_scatter(profit_data_3, drawdown_data_3, 3)
+    plotter.update_interactive_convergence_scatter(
+        profit_data_1, drawdown_data_1, 1)
+    plotter.update_interactive_convergence_scatter(
+        profit_data_2, drawdown_data_2, 2)
+    plotter.update_interactive_convergence_scatter(
+        profit_data_3, drawdown_data_3, 3)
 
     plotter.create_standard_scatter(profit_data_1, drawdown_data_1)
     plotter.create_standard_scatter(profit_data_2, drawdown_data_2)
