@@ -5,6 +5,7 @@ import time
 from mpl_toolkits.mplot3d import Axes3D
 
 # TO-DO: Implement function for calculating pareto set, and use pareto set of each gen for some plots.
+# Add points to existing scatters rather than creating new ones.
 
 
 class Plotter():
@@ -16,8 +17,10 @@ class Plotter():
         self.max_gen = n_gen
         self.cmap = matplotlib.cm.viridis_r
         self.comp_pop_obj_data = []
-        self.convergence_figure_3d = self._create_fig_ax(title="Profit vs. Drawdown vs. Trade Count", dimensions=3)
-        self.convergence_figure_2d = self._create_fig_ax(title="Profit vs. Drawdown", dimensions=2)
+        self.convergence_figure_3d = self._create_fig_ax(
+            title="Profit vs. Drawdown vs. Trade Count", dimensions=3)
+        self.convergence_figure_2d = self._create_fig_ax(
+            title="Profit vs. Drawdown", dimensions=2)
 
     def update_while_training(self):
         """
@@ -86,7 +89,8 @@ class Plotter():
         fig_3d, ax_3d = self.convergence_figure_3d
         fig_2d, ax_2d = self.convergence_figure_2d
         ax_3d.scatter(x_data, y_data, z_data, color=self.cmap(normalized_gen))
-        ax_2d.scatter(x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
+        ax_2d.scatter(x_data, y_data, color=self.cmap(
+            normalized_gen), alpha=0.6)
 
     def create_gen_scatter(self, title: str, dimensions: int, gen: int) -> None:
         """
