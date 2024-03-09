@@ -41,7 +41,7 @@ class Plotter():
         """
         Configures and returns base fig/ax for plots.
         """
-        fig = plt.figure(f"{dimensions}D Convergence Scatter", figsize=(8, 6))
+        fig = plt.figure(f"{dimensions}D Scatter", figsize=(8, 6))
         if dimensions == 2:
             with plt.style.context('ggplot'):
                 ax = fig.add_subplot()
