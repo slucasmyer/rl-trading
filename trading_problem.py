@@ -18,6 +18,7 @@ class TradingProblem(ElementwiseProblem):
 
     *** Still need to add 1 to n_vars for stop-loss gene ***
     """
+
     def __init__(self, data: Tensor, network: DataParallel[PolicyNetwork] | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
         self.data = data # The dataset
         self.network: DataParallel[PolicyNetwork] | PolicyNetwork = network # The policy network
@@ -32,7 +33,7 @@ class TradingProblem(ElementwiseProblem):
         self.chromosome %= 100
         self.chromosome += 1
         return self.chromosome
-        
+
     def _evaluate(self, x, out, *args, **kwargs):
         """
         Method to evaluate the individual (x).
@@ -84,7 +85,6 @@ class PerformanceLogger(Callback):
             "decision_variables": X.copy(),
             "best": F.min(),
         })
-        
         # Add objective data to queue for plotting
-        x_data, y_data = zip(*F) # Add z-data
-        self.queue.put((x_data, y_data, np.random.randint(500, size=len(y_data)))) # Replace last element with z-data
+        x_data, y_data, z_data = zip(*F)
+        self.queue.put(([-x for x in x_data], y_data, [-z for z in z_data])) # Easier than the alternatives I found

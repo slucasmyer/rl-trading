@@ -92,17 +92,12 @@ def begin_training(queue, n_pop, n_gen):
         save_history=True
     )
 
-    # Plot the results
-    results_plot = Scatter()
-    results_plot.add(res.F, color="blue")
-    results_plot.show()
-
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     generations = history["generation"].values
     objectives = history["objectives"].values
     decisions = history["decision_variables"].values
     best = history["best"].values
-    
+
     historia = []
     for i in range(len(generations)):
         avg_profit, avg_drawdown, avg_trades = 0, 0, 0
@@ -122,13 +117,12 @@ def begin_training(queue, n_pop, n_gen):
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history.to_csv(f"Output/performance_log/{date_time}.csv")
     history_df.to_csv(f"Output/performance_log/{date_time}_avg.csv")
-    
 
     # We will want to save the best policy network to disk
     # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
     top_10 = None if res.pop is None else res.pop.get("X")
     print("top_10", top_10)
-
+    
     # use the video writer as a resource
     with Recorder(Video("Assets/videos/ga.mp4")) as rec:
 
@@ -145,6 +139,7 @@ def begin_training(queue, n_pop, n_gen):
 
     pool.close()
 
+
 if __name__ == '__main__':
     """
     Basic multi-objective optimization using NSGA-II.
@@ -153,18 +148,25 @@ if __name__ == '__main__':
     """
 
     # NSGA-II parameters
-    n_pop = 5
-    n_gen = 5
+    n_pop = 100
+    n_gen = 200
 
-    # Start training in new process and plot data shared via queue
+    # Start training in new process, plot data shared via queue, share final res
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
-    training_process = mp.Process(
-        target=begin_training, args=(queue, n_pop, n_gen))
-    training_process.start()
-    plotter.update_while_training()
-    training_process.join()
+    training_process = mp.Process(target=begin_training, args=(queue, n_pop, n_gen))
 
-    # We will want to save the best policy network to disk
-    # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
-    # top_10 = None if res.pop is None else res.pop.get("X")[10]
+    training_process.start()
+
+    plotter.update_while_training()
+
+    # Plot the results
+    # results_plot = Scatter()
+    # results_plot.add(res.F, color="blue")
+    # results_plot.show()
+
+    plotter.create_gen_scatter("Final Gen Profit vs. Drawdown", 2, n_gen)
+    plotter.create_gen_scatter("Final Gen Profit vs. Drawdown vs. Trade Count", 3, n_gen)
+    plt.show(block=True)
+    
+    training_process.join()
