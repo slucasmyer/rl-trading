@@ -84,4 +84,4 @@ The script that creates the TradingProblem class for the multi-objective optimiz
 
 The script that pre-processes results from the agent's training/testing and plots them into graphs. There are two graphs, a profit vs. drawdown 2-Dimensional graph and a profit vs. drawdown. vs trade count 3-Dimensional graph. Each point represents an individual solution in each generation. A color gradient indicates which generation the solution came from, with yellow starting at generation 1 to dark purple being at generation 50.
 
-![Example Profit vs. Drawdown 2D](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+![Example Profit vs. Drawdown 2D](https://github.com/slucasmyer/rl-trading/tree/main/Assets/Images/2d graph.png "Example Profit vs. Drawdown 2D")
