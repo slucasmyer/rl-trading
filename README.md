@@ -25,7 +25,7 @@ Data visualizations are shown at the end that displays profits and drawdowns as 
 
 # Workflow
 
-![General Workflow](https://github.com/slucasmyer/rl-trading/blob/main/Assets/Images/Current_Workflow.jpg)
+![General Workflow](https://github.com/slucasmyer/rl-trading/blob/main/Assets/Images/Current_Workflow.JPG)
 
 # main.py
 
