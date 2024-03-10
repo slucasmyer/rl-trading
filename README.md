@@ -4,7 +4,7 @@ This is an artificial intellegence developed via PyTorch that simulates stock tr
 
 The agent's goal is to maximize profit and minimize drawdown by simulating stock trade of the TQQQ with historical stock data from 2022-01-01 to 2023-12-31. Training data consists of using historical stock data from 2011-01-01 to 2021-12-31.
 
-Data visualizations are shown at the end that displays profits and drawdowns as well as stop loss triggers for the top ten best solution candidates based on what the agent has chosen. These solution candidates have been optimized via the NSGA-2 Algorithm(Non-Sorted Genetic Algorithm) via the PyMoo library.
+Data visualizations are shown at the end that displays profits and drawdowns as well as trade counts for the best solution candidates based on what the agent has chosen for each generation. These solution candidates have been optimized via the NSGA-2 Algorithm(Non-Sorted Genetic Algorithm) via the PyMoo library.
 
 # Developers
 
@@ -29,7 +29,7 @@ Data visualizations are shown at the end that displays profits and drawdowns as 
 
 # main.py
 
-The main script of the artifical intellegence. A CSV that contains raw data from the Alpha Vantage API is loaded into data_preperation.py so that the data gets converted into inputs that can be used by trading_environment.py and other modules.
+The main script of the artifical intellegence. A Pandas Dataframe that contains raw data from the yahoo_fin API is loaded into data_preperation.py so that the data gets converted into inputs that can be used by trading_environment.py and other modules.
 
 The PolicyNetwork object then gets instantiated. There are checks in place to see if the machine this script is running on contains CUDA-compatible GPUs. If not, then the CPU is used. Other objects are instantiated as well including TradingEnvironment and TradingProblem. Thread pools are created as well as the runner, which is used for ElementWiseProblem parallelization used by the TradingProblem object. The algorithm object is then intialized, which utlizes the NSGA-2 algorithm used by the minimized optimization object.
 
@@ -39,14 +39,14 @@ The training and or testing begins with a call to minimize() from the PyMoo modu
 
 The script used to extract historical price data for the TQQQ. A call is made to the Yahoo! Finance API, which contains historical daily high price, low price, opening price, closing price, and volume values of the TQQQ throughout its entire history.
 
-The API call returns a Pandas dataframe containing this data. The "ticker" column is dropped, as that column is not necessary and certain column names are
+The API call returns a Pandas Dataframe containing this data. The "ticker" column is dropped, as that column is not necessary and certain column names are
 changed for compatiblility with data_preperation.py.
 
 CSVs are saved in the same directory as yahoo_fin_data.py if the user decides to make the optional parameter "bool" equal to true.
 
 # data_preparation.py
 
-The script used to convert raw price data from CSVs into a DataFrame object to be used by the agent. The dataframe will contain the following columns\*:
+The script used to convert raw price data from a DataFrame object into another Dataframe object to be used by the agent. The dataframe will contain the following columns\*:
 
 \*All values for each column are normalized except for Timestamp
 
@@ -69,8 +69,6 @@ The script used to convert raw price data from CSVs into a DataFrame object to b
 # trading_environment.py
 
 The script used to create the trading environment that the agent uses to make its trading decisions. The environment includes the simulated portfolio that includes the current balance of the portfolio and number of stocks owned. The agent starts each session with a balance of $100,000. The environment iterates through the preprocessed data dataframe and feeds the agent a PyTorch tensor containing the stock data for that particular day. The agent returns one of three action decisions: buy stock(0), hold/do nothing(1), and sell stock(2).
-
-These decisions must be evaluated to see if stop-loss triggers will occur. If no stop-loss trigger has occured, then the decision will go through and update the portfolio balances as necessary. If a stop-loss trigger has occured, the initial decision is overruled and a sell action will be initiated, updating the balance as necessary.
 
 # policy_network.py
 
