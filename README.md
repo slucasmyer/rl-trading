@@ -86,4 +86,4 @@ The script that pre-processes results from the agent's training/testing and plot
 
 ![Example Profit vs. Drawdown 2D](https://github.com/slucasmyer/rl-trading/tree/main/Assets/Images/2d_graph.png)
 
-![Example Profit vs. Drawdown vs. Trade Count 3D](https://github.com/slucasmyer/rl-trading/tree/main/Assets/Images/3d_graph.gif)
+![Example Profit vs. Drawdown vs. Trade Count 3D](https://github.com/slucasmyer/rl-trading/blob/main/Assets/Images/3d_graph.gif)
