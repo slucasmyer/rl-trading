@@ -86,5 +86,4 @@ class PerformanceLogger(Callback):
             "best": F.min(),
         })
         # Add objective data to queue for plotting
-        x_data, y_data, z_data = zip(*F)
-        self.queue.put(([-x for x in x_data], y_data, [-z for z in z_data])) # Easier than the alternatives I found
+        self.queue.put(self.history[-1]["objectives"]) 
