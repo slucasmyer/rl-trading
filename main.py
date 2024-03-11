@@ -112,7 +112,8 @@ def begin_training(queue, n_pop, n_gen):
         avg_trades /= len(objs)
         row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
         historia.append(row)
-    history_df: pd.DataFrame = pd.DataFrame(columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"], data=historia)
+    history_df: pd.DataFrame = pd.DataFrame(
+        columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"], data=historia)
     print("history_df", history_df.head())
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history.to_csv(f"Output/performance_log/{date_time}.csv")
@@ -165,8 +166,4 @@ if __name__ == '__main__':
     # results_plot.add(res.F, color="blue")
     # results_plot.show()
 
-    plotter.create_gen_scatter("Final Gen Profit vs. Drawdown", 2, n_gen)
-    plotter.create_gen_scatter("Final Gen Profit vs. Drawdown vs. Trade Count", 3, n_gen)
-    plt.show(block=True)
-    
     training_process.join()
