@@ -1,88 +1,165 @@
 import matplotlib.pyplot as plt
 import matplotlib
 import datetime as dt
-matplotlib.use('TkAgg')
+import time
+from mpl_toolkits.mplot3d import Axes3D
 
-# May be easiest to use this in performance logger? Maybe add a general scatter method with annotations?
-# May need better way to handle percentages since we're introducing another objective.
+# TO-DO: Add points to existing scatters rather than creating new ones. Replace naive pareto algo.
+# Put all the axes in one figure at this point? Rename axes/functions for clarity. Clean stuff up.
+
 
 class Plotter():
 
-    def __init__(self):
+    def __init__(self, queue: object, n_gen: int):
+        matplotlib.use('TkAgg')
         plt.ion()
-        plt.style.use('ggplot')
-        self.interactive_convergence_scatter = self._create_interactive_scatter()
-        self.scatters = []
-        self.annotations = []
-        self.scatter_counter = 0
+        self.queue = queue
+        self.max_gen = n_gen
+        self.cmap = matplotlib.cm.viridis_r
+        self.compl_pop_obj_data = []
+        self.pareto_gen_data = []
+        self.final_pareto_frontier = []
+        self.previous_frontier = None
+        self.convergence_figures = []
 
-    def _create_fig_ax(self, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown", are_percentages: bool = True) -> tuple:
+    def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
+                       ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
+                       y_percentage: bool = True, z_percentage: bool = False) -> tuple:
         """
-        Returns base fig/ax for plots.
+        Configures and returns base fig/ax for plots.
         """
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig = plt.figure(figsize=(8, 6))
+        if dimensions == 2:
+            with plt.style.context('ggplot'):
+                ax = fig.add_subplot()
+                fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
+        else:
+            ax = fig.add_subplot(projection='3d')
+            fig.subplots_adjust(left=0, right=0.9, top=0.9, bottom=0.1)
+
         ax.spines['left'].set_linewidth(1)
         ax.spines['bottom'].set_linewidth(1)
         ax.spines['right'].set_color((.8, .8, .8))
         ax.spines['top'].set_color((.8, .8, .8))
         ax.set_title(title, fontsize='x-large', weight='bold')
-        ax.set_xlabel(xlabel, fontsize='large', fontstyle='italic')
-        ax.set_ylabel(ylabel, fontsize='large', fontstyle='italic')
-        if are_percentages:
-            ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+        ax.set_xlabel(xlabel, fontsize='large',
+                      fontstyle='italic', labelpad=10)
+        ax.set_ylabel(ylabel, fontsize='large', fontstyle='italic', labelpad=5)
+
+        if x_percentage:
             ax.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
-        plt.pause(0.1)
+        if y_percentage:
+            ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+
+        sm = matplotlib.cm.ScalarMappable(
+            cmap=self.cmap, norm=matplotlib.colors.Normalize(vmin=1, vmax=self.max_gen))
+        sm.set_array([])
+        fig.colorbar(sm, ticks=[1, self.max_gen], aspect=12, pad=0.1, fraction=0.1, shrink=0.6,
+                     orientation='vertical', ax=ax, label='Generation')
+
+        if dimensions == 3:
+            ax.set_zlabel(zlabel, fontsize='large', fontstyle='italic')
+            if z_percentage:
+                ax.zaxis.set_major_formatter(
+                    matplotlib.ticker.PercentFormatter())
+
         return (fig, ax)
 
-    def _create_interactive_scatter(self) -> tuple:
-        """
-        Creates a figure appropriate for use as an interactive scatter plot (can click plotted points for individual ID and info).
-        """
-        fig, ax = self._create_fig_ax()
-        def on_pick(event):
-            counter = -1
-            for scatter in self.scatters:
-                counter += 1
-                if event.artist == scatter:
-                    ind = event.ind[0]
-                    annotation = self.annotations[counter][ind]
-                    visibility = not annotation.get_visible()
-                    annotation.set_visible(visibility)
-                    break
+    def _create_convergence_figures(self):
+        self.convergence_figures.append(self._create_fig_ax(
+            title="Profit vs. Drawdown vs. Trade Count", dimensions=3))
+        self.convergence_figures.append(self._create_fig_ax(
+            title="Profit vs. Drawdown", dimensions=2))
+        self.convergence_figures.append(
+            self._create_fig_ax(title="Current Pareto Front (Gen 0)", dimensions=3))
+        self.previous_frontier = self.convergence_figures[2][1].scatter(
+            [], [])  # For removal logic
 
-        fig.canvas.mpl_connect("pick_event", on_pick)
-        return (fig, ax)
+    def _update_interactive_convergence_scatter(self, current_gen: int) -> None:
+        """
+        Updates convergence scatters with objective performance data for generation.
+        """
+        x_data, y_data, z_data = self.compl_pop_obj_data[-1]
+        x_par, y_par, z_par = zip(*self.final_pareto_frontier)
+        x_par = [-x for x in x_par]
+        z_par = [-z for z in z_par]
+        normalized_gen = (current_gen-1) / self.max_gen
+        fig_3d, ax_3d = self.convergence_figures[0]
+        fig_2d, ax_2d = self.convergence_figures[1]
+        fig_par, ax_par = self.convergence_figures[2]
+        ax_3d.scatter(x_data, y_data, z_data, color=self.cmap(normalized_gen))
+        ax_2d.scatter(x_data, y_data, color=self.cmap(
+            normalized_gen), alpha=0.6)
+        self.previous_frontier.remove()
+        self.previous_frontier = ax_par.scatter(x_par, y_par, z_par, color=self.cmap(
+            normalized_gen))
+        ax_par.set_title(
+            f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
 
-    def update_interactive_convergence_scatter(self, x_data: list, y_data: list, num_trades: list, gen_id: int) -> None:
+    def calc_pareto_set(self, gen_data: list):
         """
-        Updates and redraws scatter plot with data for a color-coded generation of chromosomes.
+        Returns a list of non-dominated objective data points.
         """
-        fig, ax = self.interactive_convergence_scatter
-        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.1)
-        colormap = matplotlib.cm.plasma
-        scatter = ax.scatter(x_data, y_data,
-                             color=colormap((self.scatter_counter % 5) / 5), picker=True)
-        self.scatter_counter += 1
-        self.scatters.append(scatter)
-        self.annotations.append([])
+        non_dominated = []
+        for point in gen_data:
+            if not any(other_point is not point and
+                       other_point[0] <= point[0] and
+                       other_point[1] <= point[1] and
+                       other_point[2] <= point[2] and
+                       (other_point[0] < point[0] or other_point[1]
+                           < point[1] or other_point[2] < point[2])
+                       for other_point in gen_data):
+                non_dominated.append(point)
+        return non_dominated
 
-        for i, (x_coord, y_coord) in enumerate(zip(x_data, y_data)):
-            annotation = ax.annotate(f"Gen ID: {gen_id}\nPop ID: {i+1}\nProfit: {int(x_data[i])}\nDrawdown: {int(y_data[i])}", xy=(x_coord, y_coord), xytext=(
-                38, 20), textcoords="offset points", bbox=dict(boxstyle="round", fc="w", fill=True), arrowprops=dict(arrowstyle="fancy"))
-            annotation.set_visible(False)
-            self.annotations[-1].append(annotation)
-        plt.pause(0.1)
+    def update_while_training(self):
+        """
+        Plots performance data on objectives, generated by the training process, on convergence scatters.
+        """
+        current_generation = 0
+        self._create_convergence_figures()
+        while current_generation < self.max_gen:
+            if not self.queue.empty():
+                current_generation += 1
+                gen_data = self.queue.get()
 
-    def create_standard_scatter(self, x_data: list, y_data: list, title: str = "Profit vs. Drawdown", xlabel: str = "Profit", ylabel: str = "Drawdown") -> None:
+                # Update pareto set data
+                self.pareto_gen_data.append(self.calc_pareto_set(gen_data))
+                self.final_pareto_frontier.extend(self.pareto_gen_data[-1])
+                self.final_pareto_frontier = self.calc_pareto_set(
+                    self.final_pareto_frontier)
+                # Transform data for plotting since trade count/profit negated for min optimization
+                x_data, y_data, z_data = zip(*gen_data)
+                x_data = [-x for x in x_data]
+                z_data = [-z for z in z_data]
+                self.compl_pop_obj_data.append((x_data, y_data, z_data))
+                self._update_interactive_convergence_scatter(
+                    current_generation)
+
+            for figure in self.convergence_figures:
+                figure[0].canvas.flush_events()
+            time.sleep(0.1)
+
+        plt.show(block=True)
+        plt.ioff()
+
+    def create_gen_scatter(self, title: str, dimensions: int, gen: int) -> None:
         """
-        Creates a scatter for a single undifferentiated group of chromosomal data (has no annotations).
+        Generates scatter of performance data on objectives for passed generation. 
         """
-        fig, ax = self._create_fig_ax(title, xlabel, ylabel)
-        scatter = ax.scatter(x_data, y_data)
+        fig, ax = self._create_fig_ax(title, dimensions)
+        x_data, y_data, z_data = self.compl_pop_obj_data[gen-1]
+        normalized_gen = gen / self.max_gen
+        if dimensions == 2:
+            ax.scatter(x_data, y_data, color=self.cmap(normalized_gen))
+        else:
+            ax.scatter(x_data, y_data, z_data, color=self.cmap(normalized_gen))
+        fig.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        plt.savefig(f"Figures/{timestamp}_{title}_scatter.png")
-        
-    # def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int, pop_id: int) -> None:
+        fig.savefig(f"Assets/Images/{timestamp}_scatter.png")
+
+    # def stop_losses_triggered(stop_loss_data: list, network_decision_data: list, gen_id: int,
+    # pop_id: int) -> None:
     #     """
     #     Delete? we shall see
     #     """
@@ -96,38 +173,3 @@ class Plotter():
     #     timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     #     plt.savefig(
     #         f"Figures/{timestamp}_stop_losses_triggered_gen{gen_id}_pop_{pop_id}.png")
-
-
-if __name__ == '__main__':
-
-    # Scatter plotting testing data
-    profit_data_1 = [12000, 15000, 2000, 20000, 55000]
-    drawdown_data_1 = [58000, 20000, 32000, 80000, 55000]
-
-    profit_data_2 = [1000, 2000, 5000, 8000, 10000, 15000, 18000,
-                     30000, 35000, 40000, 62000, 90000, 95000, 99000, 100000]
-    drawdown_data_2 = [5000, 10000, 15000, 20000, 35000, 40000,
-                       50000, 62000, 65000, 70000, 75000, 80000, 85000, 92000, 100000]
-
-    profit_data_3 = [5000, 6000, 7000, 1000, 12000]
-    drawdown_data_3 = [24000, 2000, 3000, 6000, 2500]
-
-    # Stop loss trigger plotting testing data
-    stop_loss_step_data = [0, 1, 0, 1, 0]
-    network_decision_data = [0, 1, 2, 1, 0]
-
-    # Test instantiation
-    plotter = Plotter()
-
-    # Test methods
-    plotter.update_interactive_convergence_scatter(profit_data_1, drawdown_data_1, 1)
-    plotter.update_interactive_convergence_scatter(profit_data_2, drawdown_data_2, 2)
-    plotter.update_interactive_convergence_scatter(profit_data_3, drawdown_data_3, 3)
-
-    plotter.create_standard_scatter(profit_data_1, drawdown_data_1)
-    plotter.create_standard_scatter(profit_data_2, drawdown_data_2)
-    plotter.create_standard_scatter(profit_data_3, drawdown_data_3)
-
-    # plotter.stop_losses_triggered(stop_loss_step_data, network_decision_data, (1, 2))
-
-    print("Done")

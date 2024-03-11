@@ -7,7 +7,6 @@ from pymoo.core.callback import Callback
 from time import sleep
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
-from plotter import Plotter
 
 
 class TradingProblem(ElementwiseProblem):
@@ -19,6 +18,7 @@ class TradingProblem(ElementwiseProblem):
 
     *** Still need to add 1 to n_vars for stop-loss gene ***
     """
+
     def __init__(self, data: Tensor, network: DataParallel[PolicyNetwork] | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
         self.data = data # The dataset
         self.network: DataParallel[PolicyNetwork] | PolicyNetwork = network # The policy network
@@ -33,7 +33,7 @@ class TradingProblem(ElementwiseProblem):
         self.chromosome %= 100
         self.chromosome += 1
         return self.chromosome
-        
+
     def _evaluate(self, x, out, *args, **kwargs):
         """
         Method to evaluate the individual (x).
@@ -69,10 +69,10 @@ class TradingProblem(ElementwiseProblem):
 
 
 class PerformanceLogger(Callback):
-    def __init__(self):
+    def __init__(self, queue):
         super().__init__()
         self.history = []
-        self.plotter = Plotter()
+        self.queue = queue
 
     def notify(self, algorithm):
         F = algorithm.pop.get("F") # The objective values
@@ -85,7 +85,5 @@ class PerformanceLogger(Callback):
             "decision_variables": X.copy(),
             "best": F.min(),
         })
-        
-        # Plot objective data for each generation
-        profits, drawdowns, num_trades = zip(*F)
-        self.plotter.update_interactive_convergence_scatter(profits, drawdowns, num_trades, algorithm.n_gen)
+        # Add objective data to queue for plotting
+        self.queue.put(self.history[-1]["objectives"]) 
