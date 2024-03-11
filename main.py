@@ -132,8 +132,20 @@ if __name__ == '__main__':
     # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
     top_10 = None if res.pop is None else res.pop.get("X")
     print("top_10", top_10)
+    # save top 10 policy networks
+    if top_10 is not None:
+        for i, policy in enumerate(top_10):
+            network.load_state_dict(policy)
+            torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_policy_{i}.pt")
 
-    # use the video writer as a resource
+    # save the dropped columns for each run
+    # is there a way we can observe the buy and sell?
+    # is there a way we can
+    # save the best policy network to disk
+    # 25/10 for duration of gaining and losing trades
+    
+    print()
+
     with Recorder(Video("Assets/videos/ga.mp4")) as rec:
 
         # for each algorithm object in the history
