@@ -139,7 +139,12 @@ class Plotter():
             for figure in self.convergence_figures:
                 figure[0].canvas.flush_events()
             time.sleep(0.1)
-
+            
+        timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        counter = 0 
+        for fig_ax in self.convergence_figures:
+            counter += 1
+            fig_ax[0].savefig(f"Assets/Images/{timestamp}_scatter_{counter}.png")
         plt.show(block=True)
         plt.ioff()
 
