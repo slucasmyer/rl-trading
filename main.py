@@ -25,6 +25,20 @@ print(sys.path)
 from yahoo_fin_data import get_data
 from plotter import Plotter
 
+def map_params_to_model(model, params):
+        """
+        Decodes (i.e. maps) the genes of an individual (x) into the policy network.
+        """
+        idx = 0 # Starting index in the parameter vector
+        new_state_dict = {} # New state dictionary to load into the model
+        for name, param in model.named_parameters(): # Iterate over each layer's weights and biases in the model
+            num_param = param.numel() # Compute the number of elements in this layer
+            param_values = params[idx:idx + num_param] # Extract the corresponding part of `params`
+            param_values = param_values.reshape(param.size()) # Reshape the extracted values into the correct shape for this layer
+            param_values = torch.Tensor(param_values) # Convert to the appropriate tensor
+            new_state_dict[name] = param_values # Add to the new state dictionary
+            idx += num_param # Update the index
+        model.load_state_dict(new_state_dict) # Load the new state dictionary into the model
 
 def begin_training(queue, n_pop, n_gen):
 
@@ -60,7 +74,7 @@ def begin_training(queue, n_pop, n_gen):
 
     # Create the trading environment
     trading_env = TradingEnvironment(
-        data_collector.data_tensor, network, data_collector.closing_prices, n_gen, n_pop)
+        data_collector.training_tensor, network, data_collector.training_prices)
 
     # initialize the thread pool and create the runner for ElementwiseProblem parallelization
     n_threads = 4
@@ -113,19 +127,61 @@ def begin_training(queue, n_pop, n_gen):
         row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
         historia.append(row)
     history_df: pd.DataFrame = pd.DataFrame(
-        columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"], data=historia)
+        columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"],
+        data=historia
+    )
     print("history_df", history_df.head())
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
-    history.to_csv(f"Output/performance_log/{date_time}.csv")
-    history_df.to_csv(f"Output/performance_log/{date_time}_avg.csv")
+    history.to_csv(f"Output/performance_log/{date_time}_ngen_{n_gen}.csv")
+    history_df.to_csv(f"Output/performance_log/{date_time}_ngen_{n_gen}_avg.csv")
 
-    # We will want to save the best policy network to disk
-    # We might use the following code to do that, but I wouldn't know as it hasn't been reached :(
-    top_10 = None if res.pop is None else res.pop.get("X")
-    print("top_10", top_10)
-    
+    trading_env.set_features(data_collector.testing_tensor)
+    trading_env.set_closing_prices(data_collector.testing_prices)
+    population = None if res.pop is None else res.pop.get("X")
+
+    validation_results = []
+    max_ratio = 0.0
+    best_network = None
+    if population is not None:
+        for i, x in enumerate(population):
+            map_params_to_model(network, x)
+            torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
+            trading_env.reset()
+            
+            profit, drawdown, num_trades = trading_env.simulate_trading()
+            ratio = profit / drawdown
+            if ratio > max_ratio and drawdown < 45.0:
+                best = ratio
+                best_network = network.state_dict()
+                
+            print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
+            validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
+        torch.save(best_network, f"Output/policy_networks/{date_time}_ngen_{n_gen}_best.pt")
+        validation_results_df = pd.DataFrame(
+            columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
+            data=validation_results
+        )
+
+        # sort by ratio
+        validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
+
+        validation_results_df.to_csv(f"Output/validation_results/{date_time}_ngen_{n_gen}_validation.csv")
+
+        # plot in crude manner
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plotting data
+        ax.scatter(validation_results_df["profit"], validation_results_df["drawdown"], validation_results_df["num_trades"])
+
+        ax.set_xlabel('Profit')
+        ax.set_ylabel('Drawdown')
+        ax.set_zlabel('Number of Trades')
+        plt.savefig(f"Output/validation_results/{date_time}_ngen_{n_gen}_validation.png")
+        plt.show()
+
     # use the video writer as a resource
-    with Recorder(Video("Assets/videos/ga.mp4")) as rec:
+    with Recorder(Video(f"Assets/videos/ga_{date_time}_ngen_{n_gen}.mp4")) as rec:
 
         # for each algorithm object in the history
         for entry in res.history:
@@ -161,9 +217,10 @@ if __name__ == '__main__':
 
     plotter.update_while_training()
 
-    # Plot the results
-    # results_plot = Scatter()
-    # results_plot.add(res.F, color="blue")
-    # results_plot.show()
-
     training_process.join()
+
+    training_process.close()
+
+    queue.close()
+
+    print("Training process finished.")

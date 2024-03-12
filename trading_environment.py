@@ -1,7 +1,5 @@
 import pandas as pd
 import torch
-from time import sleep
-from collections import defaultdict
 
 
 class TradingEnvironment:
@@ -12,7 +10,7 @@ class TradingEnvironment:
     Profit and drawdown are calculated based on the trading decisions.
     """
 
-    def __init__(self, features, model, closing_prices, max_gen, pop_size):
+    def __init__(self, features, model, closing_prices):
         self.features = features  # The dataset
         self.model = model  # The model
         self.closing_prices = closing_prices # Closing prices
@@ -25,12 +23,33 @@ class TradingEnvironment:
         self.profit: float = 0.00 # Profit percentage
         self.num_trades = 0  # Number of trades
         
-        self.max_gen = max_gen  # Used to structure dicts
-        self.pop_size = pop_size  # Used to structure dicts
-        self.current_gen = 1  # Used to identify data
-        self.current_ind = 0  # Used to identify data
+        # self.max_gen = max_gen  # Used to structure dicts
+        # self.pop_size = pop_size  # Used to structure dicts
+        # self.current_gen = 1  # Used to identify data
+        # self.current_ind = 0  # Used to identify data
 
-    def simulate_trading(self, chromosome: int):
+    def reset(self):
+        """Resets the environment."""
+        self.balance = self.initial_balance
+        self.max_balance = self.balance
+        self.drawdown = 0.00
+        self.shares_owned = 0
+        self.profit = 0.00
+        self.num_trades = 0
+
+    def set_model(self, new_model):
+        """Sets the model."""
+        self.model = new_model
+
+    def set_features(self, new_features):
+        """Sets the features."""
+        self.features = new_features
+
+    def set_closing_prices(self, new_closing_prices):
+        """Sets the closing prices."""
+        self.closing_prices = new_closing_prices
+
+    def simulate_trading(self):
         """
         Currently the core of this class.
         Resets profit and drawdown for evaluation of new individual.
@@ -39,18 +58,20 @@ class TradingEnvironment:
         Returned values are used to evaluate the individual (multi-objective).
         """
         # Update current individual num and current gen num
-        self.current_ind += 1
-        if self.current_ind > self.pop_size:
-            self.current_gen += 1
-            self.current_ind = 1
+        # self.current_ind += 1
+        # if self.current_ind > self.pop_size:
+        #     self.current_gen += 1
+        #     self.current_ind = 1
         
-        self.balance = self.initial_balance  # Reset profit for evaluation of new individual
-        self.max_balance = self.balance  # Max profit
-        self.drawdown = 0.00  # Reset drawdown for evaluation of new individual
-        self.shares_owned = 0  # Reset shares owned for evaluation of new individual
-        self.profit = 0.00  # Reset profit for evaluation of new individual
-        self.num_trades = 0  # Reset number of trades for evaluation of new individual
+        # self.balance = self.initial_balance  # Reset profit for evaluation of new individual
+        # self.max_balance = self.balance  # Max profit
+        # self.drawdown = 0.00  # Reset drawdown for evaluation of new individual
+        # self.shares_owned = 0  # Reset shares owned for evaluation of new individual
+        # self.profit = 0.00  # Reset profit for evaluation of new individual
+        # self.num_trades = 0  # Reset number of trades for evaluation of new individual
+        self.reset()
         local_decisions = []
+
         # Simulate trading over the dataset
         for i in range(len(self.features)):
             
@@ -62,6 +83,7 @@ class TradingEnvironment:
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
             local_decisions.append(decision)
             current_price = self.closing_prices.iloc[i]
+
             if decision == 0 and self.balance >= current_price:  # Buy
                 shares_bought = self.balance // current_price
                 self.shares_owned += shares_bought
@@ -73,7 +95,6 @@ class TradingEnvironment:
                 self.shares_owned = 0
                 self.num_trades += 1
 
-            #  most of the bugs were hiding here
             current_portfolio_value = self.balance + (self.shares_owned * current_price)
             self.max_balance = max(self.max_balance, current_portfolio_value)
             current_drawdown = self.max_balance - current_portfolio_value if current_portfolio_value < self.max_balance else 0.00
@@ -90,27 +111,5 @@ class TradingEnvironment:
         scaled_profit = raw_profit / self.initial_balance
         profit_pct = scaled_profit * 100
         self.profit = profit_pct
-        # print(f"simulate_trading Gen {self.current_gen}, Pop {self.current_ind}, Profit: {self.profit}, Drawdown: {self.drawdown}, Num Trades: {self.num_trades}")
 
-        # sleep(0.5)
         return self.profit, self.drawdown, float(self.num_trades)
-
-
-def preprocess_data(data, columns_to_drop=[]):
-    """
-    This will likely be unnecessary soon.
-    Can be moved to data_preparation.py.
-    All we truly need here is to convert the DataFrame to a tensor.
-    May be useful to implement column dropping optionality there too.
-    """
-    # Drop columns
-    if columns_to_drop:
-        data = data.drop(columns=columns_to_drop)
-
-    # Fill NaN values
-    data_filled = data.bfill().ffill().fillna(0)
-
-    # Convert the DataFrame to a tensor
-    features_tensor = torch.tensor(data_filled.values, dtype=torch.float32)
-
-    return features_tensor

@@ -22,6 +22,12 @@ class DataCollector:
         self.data_tensor = torch.tensor([])
         self.data_shape = None
 
+        # need to split data into training and testing
+        self.training_tensor = torch.tensor([])
+        self.training_prices = None
+        self.testing_tensor = torch.tensor([])
+        self.testing_prices = None
+
     def _clean_data(self) -> None:
         """
         Remove set index as the timestamp and drop rows with missing values.
@@ -174,6 +180,24 @@ class DataCollector:
         # Catches any remaining NaN cells
         self.data_df = self.data_df.bfill().ffill().fillna(0)
 
+    def _split_data(self, split_index: pd.DatetimeIndex) -> None:
+        """
+        Splits the data into training and testing sets.
+        """
+        self.training_tensor = torch.tensor(self.data_df.loc[:split_index].values, dtype=torch.float32)
+        self.testing_tensor = torch.tensor(self.data_df.loc[split_index:].values, dtype=torch.float32)
+        print("training_tensor", self.training_tensor.shape)
+        print("testing_tensor", self.testing_tensor.shape)
+        if self.closing_prices is not None:
+            self.training_prices = self.closing_prices.loc[:split_index]
+            self.testing_prices = self.closing_prices.loc[split_index:]
+            print("training_prices", self.training_prices.shape)
+            print("testing_prices", self.testing_prices.shape)
+            print("training_prices head", self.training_prices.head())
+            print("training_prices tail", self.training_prices.tail())
+            print("testing_prices head", self.testing_prices.head())
+            print("testing_prices tail", self.testing_prices.tail())
+
     def prepare_and_calculate_data(self, columns_to_drop: list = []) -> None:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
@@ -190,6 +214,14 @@ class DataCollector:
         # print("data_shape", self.data_df.shape)
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.data_df.values, dtype=torch.float32)
+        
+        # Split data into training and testing
+        split_index = pd.to_datetime('2022-01-01').normalize()
+        print("split_index", split_index, "type", type(split_index))
+        self._split_data(split_index)
+        
+        
+            
 
 
 if __name__ == '__main__':
