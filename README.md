@@ -20,7 +20,6 @@ Data visualizations are shown at the end that displays profits and drawdowns as 
 - [NumPy](https://numpy.org/)
 - [Pandas](https://pandas.pydata.org/)
 - [MatPlotLib](https://matplotlib.org/)
-- [Google Colab](https://colab.google/)
 - [yahoo_fin](https://theautomatic.net/yahoo_fin-documentation/)
 
 # Workflow
