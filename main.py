@@ -1,5 +1,6 @@
+import os
+from pathlib import Path
 import torch
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch.nn import DataParallel
@@ -14,14 +15,11 @@ from pymoo.core.problem import StarmapParallelization
 from pymoo.visualization.scatter import Scatter
 from pyrecorder.recorder import Recorder
 from pyrecorder.writers.video import Video
-
-
 from data_preparation import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
 import sys
-print(sys.path)
 from yahoo_fin_data import get_data
 from plotter import Plotter
 
@@ -42,13 +40,14 @@ def map_params_to_model(model, params):
 
 def begin_training(queue, n_pop, n_gen):
 
+    script_path = Path(__file__).parent
+
     # Get and load data
     stock_df = pd.DataFrame(get_data("TQQQ"))
     data_collector = DataCollector(data_df=stock_df)
 
     # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
     data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
-    # print("processed_data (main)", data_collector.data_df.head())
 
     # Get the input shape
     input_shape = data_collector.data_tensor.shape[1]
@@ -105,18 +104,20 @@ def begin_training(queue, n_pop, n_gen):
         verbose=True,
         save_history=True
     )
-
+    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
+    history.to_csv(script_path / f"Output/performance_log/ngen_{n_gen}/{date_time}.csv")
+
     generations = history["generation"].values
     objectives = history["objectives"].values
     decisions = history["decision_variables"].values
     best = history["best"].values
 
     historia = []
+    
     for i in range(len(generations)):
         avg_profit, avg_drawdown, avg_trades = 0, 0, 0
         objs = objectives[i]
-        # objs = np.array(eval(objectives[i]))
         for row in objs:
             avg_profit += row[0]
             avg_drawdown += row[1]
@@ -126,14 +127,12 @@ def begin_training(queue, n_pop, n_gen):
         avg_trades /= len(objs)
         row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
         historia.append(row)
+    
     history_df: pd.DataFrame = pd.DataFrame(
         columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"],
         data=historia
     )
-    print("history_df", history_df.head())
-    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
-    history.to_csv(f"Output/performance_log/{date_time}_ngen_{n_gen}.csv")
-    history_df.to_csv(f"Output/performance_log/{date_time}_ngen_{n_gen}_avg.csv")
+    history_df.to_csv(script_path / f"Output/performance_log/ngen_{n_gen}/{date_time}_avg.csv")
 
     trading_env.set_features(data_collector.testing_tensor)
     trading_env.set_closing_prices(data_collector.testing_prices)
@@ -145,18 +144,20 @@ def begin_training(queue, n_pop, n_gen):
     if population is not None:
         for i, x in enumerate(population):
             map_params_to_model(network, x)
-            torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
+            # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
-            
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown
-            if ratio > max_ratio and drawdown < 45.0:
+
+            if ratio > max_ratio and drawdown < 55.0:
                 best = ratio
                 best_network = network.state_dict()
                 
             print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
             validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
-        torch.save(best_network, f"Output/policy_networks/{date_time}_ngen_{n_gen}_best.pt")
+        
+        torch.save(best_network, script_path / f"Output/policy_networks/ngen_{n_gen}/{date_time}_best.pt")
+        
         validation_results_df = pd.DataFrame(
             columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
             data=validation_results
@@ -164,8 +165,7 @@ def begin_training(queue, n_pop, n_gen):
 
         # sort by ratio
         validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
-
-        validation_results_df.to_csv(f"Output/validation_results/{date_time}_ngen_{n_gen}_validation.csv")
+        validation_results_df.to_csv(script_path / f"Output/validation_results/ngen_{n_gen}/{date_time}.csv")
 
         # plot in crude manner
         fig = plt.figure()
@@ -177,11 +177,12 @@ def begin_training(queue, n_pop, n_gen):
         ax.set_xlabel('Profit')
         ax.set_ylabel('Drawdown')
         ax.set_zlabel('Number of Trades')
-        plt.savefig(f"Output/validation_results/{date_time}_ngen_{n_gen}_validation.png")
+
+        plt.savefig(script_path / f"Output/validation_results/ngen_{n_gen}/{date_time}_validation.png")
         plt.show()
 
     # use the video writer as a resource
-    with Recorder(Video(f"Assets/videos/ga_{date_time}_ngen_{n_gen}.mp4")) as rec:
+    with Recorder(Video(script_path / f"Assets/videos/ga_{date_time}_ngen_{n_gen}.mp4")) as rec:
 
         # for each algorithm object in the history
         for entry in res.history:
@@ -206,7 +207,7 @@ if __name__ == '__main__':
 
     # NSGA-II parameters
     n_pop = 100
-    n_gen = 200
+    n_gen = 1000
 
     # Start training in new process, plot data shared via queue, share final res
     queue = mp.Queue()

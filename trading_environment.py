@@ -23,11 +23,6 @@ class TradingEnvironment:
         self.profit: float = 0.00 # Profit percentage
         self.num_trades = 0  # Number of trades
         
-        # self.max_gen = max_gen  # Used to structure dicts
-        # self.pop_size = pop_size  # Used to structure dicts
-        # self.current_gen = 1  # Used to identify data
-        # self.current_ind = 0  # Used to identify data
-
     def reset(self):
         """Resets the environment."""
         self.balance = self.initial_balance
@@ -57,18 +52,7 @@ class TradingEnvironment:
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
         """
-        # Update current individual num and current gen num
-        # self.current_ind += 1
-        # if self.current_ind > self.pop_size:
-        #     self.current_gen += 1
-        #     self.current_ind = 1
         
-        # self.balance = self.initial_balance  # Reset profit for evaluation of new individual
-        # self.max_balance = self.balance  # Max profit
-        # self.drawdown = 0.00  # Reset drawdown for evaluation of new individual
-        # self.shares_owned = 0  # Reset shares owned for evaluation of new individual
-        # self.profit = 0.00  # Reset profit for evaluation of new individual
-        # self.num_trades = 0  # Reset number of trades for evaluation of new individual
         self.reset()
         local_decisions = []
 

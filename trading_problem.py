@@ -1,10 +1,8 @@
 import numpy as np
-import pandas as pd
 from torch import Tensor
 from torch.nn import DataParallel
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.callback import Callback
-from time import sleep
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
 
@@ -37,8 +35,6 @@ class TradingProblem(ElementwiseProblem):
         """
         self.decode_model(x) # Decode the individual's parameters into the policy network
         profit, drawdown, num_trades = self.environment.simulate_trading()  # Simulate trading
-        # print(f"_evaluate Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}")
-        # sleep(0.5)
         out["F"] = np.array([-profit, drawdown, -num_trades]) # Set the objectives
 
     def decode_model(self, params):

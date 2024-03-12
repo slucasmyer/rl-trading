@@ -180,23 +180,15 @@ class DataCollector:
         # Catches any remaining NaN cells
         self.data_df = self.data_df.bfill().ffill().fillna(0)
 
-    def _split_data(self, split_index: pd.DatetimeIndex) -> None:
+    def _split_data(self, split_index: pd.Timestamp) -> None:
         """
         Splits the data into training and testing sets.
         """
         self.training_tensor = torch.tensor(self.data_df.loc[:split_index].values, dtype=torch.float32)
         self.testing_tensor = torch.tensor(self.data_df.loc[split_index:].values, dtype=torch.float32)
-        print("training_tensor", self.training_tensor.shape)
-        print("testing_tensor", self.testing_tensor.shape)
         if self.closing_prices is not None:
             self.training_prices = self.closing_prices.loc[:split_index]
             self.testing_prices = self.closing_prices.loc[split_index:]
-            print("training_prices", self.training_prices.shape)
-            print("testing_prices", self.testing_prices.shape)
-            print("training_prices head", self.training_prices.head())
-            print("training_prices tail", self.training_prices.tail())
-            print("testing_prices head", self.testing_prices.head())
-            print("testing_prices tail", self.testing_prices.tail())
 
     def prepare_and_calculate_data(self, columns_to_drop: list = []) -> None:
         """
