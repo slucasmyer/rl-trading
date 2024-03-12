@@ -23,6 +23,14 @@ import sys
 from yahoo_fin_data import get_data
 from plotter import Plotter
 
+def set_path(script_path: Path, dir_path: str, file_path: str) -> Path:
+    """Set output path."""
+    output_dir = script_path / Path(dir_path) 
+    output_dir.mkdir(parents=True, exist_ok=True)
+    new_path = output_dir / file_path
+    return new_path
+    
+
 def map_params_to_model(model, params):
         """
         Decodes (i.e. maps) the genes of an individual (x) into the policy network.
@@ -40,7 +48,7 @@ def map_params_to_model(model, params):
 
 def begin_training(queue, n_pop, n_gen):
 
-    script_path = Path(__file__).parent
+    SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
     stock_df = pd.DataFrame(get_data("TQQQ"))
@@ -106,7 +114,7 @@ def begin_training(queue, n_pop, n_gen):
     )
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
-    history.to_csv(script_path / f"Output/performance_log/ngen_{n_gen}/{date_time}.csv")
+    history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
 
     generations = history["generation"].values
     objectives = history["objectives"].values
@@ -132,7 +140,7 @@ def begin_training(queue, n_pop, n_gen):
         columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"],
         data=historia
     )
-    history_df.to_csv(script_path / f"Output/performance_log/ngen_{n_gen}/{date_time}_avg.csv")
+    history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
 
     trading_env.set_features(data_collector.testing_tensor)
     trading_env.set_closing_prices(data_collector.testing_prices)
@@ -147,7 +155,8 @@ def begin_training(queue, n_pop, n_gen):
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             profit, drawdown, num_trades = trading_env.simulate_trading()
-            ratio = profit / drawdown
+            
+            ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
             if ratio > max_ratio and drawdown < 55.0:
                 best = ratio
@@ -156,7 +165,7 @@ def begin_training(queue, n_pop, n_gen):
             print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
             validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
         
-        torch.save(best_network, script_path / f"Output/policy_networks/ngen_{n_gen}/{date_time}_best.pt")
+        torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
         
         validation_results_df = pd.DataFrame(
             columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
@@ -165,7 +174,8 @@ def begin_training(queue, n_pop, n_gen):
 
         # sort by ratio
         validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
-        validation_results_df.to_csv(script_path / f"Output/validation_results/ngen_{n_gen}/{date_time}.csv")
+        
+        validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
 
         # plot in crude manner
         fig = plt.figure()
@@ -177,12 +187,13 @@ def begin_training(queue, n_pop, n_gen):
         ax.set_xlabel('Profit')
         ax.set_ylabel('Drawdown')
         ax.set_zlabel('Number of Trades')
-
-        plt.savefig(script_path / f"Output/validation_results/ngen_{n_gen}/{date_time}_validation.png")
+        
+        plt.savefig(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}_validation.png"))
         plt.show()
 
     # use the video writer as a resource
-    with Recorder(Video(script_path / f"Assets/videos/ga_{date_time}_ngen_{n_gen}.mp4")) as rec:
+    
+    with Recorder(Video(f"Assets/videos/n_gen_{n_gen}_{date_time}.mp4")) as rec:
 
         # for each algorithm object in the history
         for entry in res.history:
@@ -207,7 +218,7 @@ if __name__ == '__main__':
 
     # NSGA-II parameters
     n_pop = 100
-    n_gen = 1000
+    n_gen = 500
 
     # Start training in new process, plot data shared via queue, share final res
     queue = mp.Queue()
