@@ -89,7 +89,7 @@ def begin_training(queue, n_pop, n_gen):
     runner = StarmapParallelization(pool.starmap)
 
     # Create the trading problem
-    problem = TradingProblem(data_collector.data_tensor, network,
+    problem = TradingProblem(data_collector.training_tensor, network,
                              trading_env, elementwise_runner=runner)  # Optimization setup
 
     # Create the algorithm
