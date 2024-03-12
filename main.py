@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import argparse
 import torch
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,6 +23,21 @@ from trading_environment import TradingEnvironment
 import sys
 from yahoo_fin_data import get_data
 from plotter import Plotter
+
+def parse_args():
+    # Create the parser
+    parser = argparse.ArgumentParser(description="Run trading optimization with optional settings.")
+
+    # Add arguments
+    parser.add_argument('--pop_size', type=int, default=100, help='Population size for the genetic algorithm')
+    parser.add_argument('--n_gen', type=int, default=100, help='Number of generations for the genetic algorithm')
+    parser.add_argument('--profit_threshold', type=float, default=100.0, help='Profit threshold for considering a model worth saving')
+    parser.add_argument('--drawdown_threshold', type=float, default=40.0, help='Drawdown threshold for considering a model worth saving')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    return args
 
 def set_path(script_path: Path, dir_path: str, file_path: str) -> Path:
     """Set output path."""
@@ -216,9 +232,19 @@ if __name__ == '__main__':
     Can be run in a python notebook or as a standalone script.
     """
 
+    args = parse_args()
+
+    # Access arguments like this
+    print(f"Population size: {args.pop_size}")
+    print(f"Number of generations: {args.n_gen}")
+    print(f"Profit threshold: {args.profit_threshold}")
+    print(f"Drawdown threshold: {args.drawdown_threshold}")
+
     # NSGA-II parameters
-    n_pop = 100
-    n_gen = 500
+    n_pop = args.pop_size
+    n_gen = args.n_gen
+    profit_threshold = args.profit_threshold
+    drawdown_threshold = args.drawdown_threshold
 
     # Start training in new process, plot data shared via queue, share final res
     queue = mp.Queue()
