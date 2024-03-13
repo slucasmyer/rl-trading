@@ -14,8 +14,6 @@ from pymoo.optimize import minimize
 import multiprocessing as mp
 from pymoo.core.problem import StarmapParallelization
 from pymoo.visualization.scatter import Scatter
-from pyrecorder.recorder import Recorder
-from pyrecorder.writers.video import Video
 from data_preparation import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
@@ -62,7 +60,7 @@ def map_params_to_model(model, params):
             idx += num_param # Update the index
         model.load_state_dict(new_state_dict) # Load the new state dictionary into the model
 
-def begin_training(queue, n_pop, n_gen):
+def train_and_validate(queue, n_pop, n_gen):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -183,6 +181,8 @@ def begin_training(queue, n_pop, n_gen):
         
         torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
         
+        queue.put(validation_results)
+        
         validation_results_df = pd.DataFrame(
             columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
             data=validation_results
@@ -194,33 +194,33 @@ def begin_training(queue, n_pop, n_gen):
         validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
 
         # plot in crude manner
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
 
-        # Plotting data
-        ax.scatter(validation_results_df["profit"], validation_results_df["drawdown"], validation_results_df["num_trades"])
+        # # Plotting data
+        # ax.scatter(validation_results_df["profit"], validation_results_df["drawdown"], validation_results_df["num_trades"])
 
-        ax.set_xlabel('Profit')
-        ax.set_ylabel('Drawdown')
-        ax.set_zlabel('Number of Trades')
+        # ax.set_xlabel('Profit')
+        # ax.set_ylabel('Drawdown')
+        # ax.set_zlabel('Number of Trades')
         
-        plt.savefig(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}_validation.png"))
-        plt.show()
+        # plt.savefig(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}_validation.png"))
+        # plt.show()
 
     # use the video writer as a resource
     
-    with Recorder(Video(f"Assets/videos/n_gen_{n_gen}_{date_time}.mp4")) as rec:
+    # with Recorder(Video(f"Assets/videos/n_gen_{n_gen}_{date_time}.mp4")) as rec:
 
-        # for each algorithm object in the history
-        for entry in res.history:
-            sc = Scatter(title=("Gen %s" % entry.n_gen), labels=["Profit", "Drawdown", "Trade Count"])
-            sc.add(entry.pop.get("F"))
-            sc.add(entry.problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
-            sc.do()
+    #     # for each algorithm object in the history
+    #     for entry in res.history:
+    #         sc = Scatter(title=("Gen %s" % entry.n_gen), labels=["Profit", "Drawdown", "Trade Count"])
+    #         sc.add(entry.pop.get("F"))
+    #         sc.add(entry.problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
+    #         sc.do()
 
-            # finally record the current visualization to the video
-            rec.record()
-        rec.close()
+    #         # finally record the current visualization to the video
+    #         rec.record()
+    #     rec.close()
 
     pool.close()
 
@@ -246,19 +246,19 @@ if __name__ == '__main__':
     profit_threshold = args.profit_threshold
     drawdown_threshold = args.drawdown_threshold
 
-    # Start training in new process, plot data shared via queue, share final res
+    # Start training and validation in new process, create visualizations with data from queue
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
-    training_process = mp.Process(target=begin_training, args=(queue, n_pop, n_gen))
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))
 
-    training_process.start()
+    train_and_validate_process.start()
 
     plotter.update_while_training()
 
-    training_process.join()
+    train_and_validate_process.join()
 
-    training_process.close()
+    train_and_validate_process.close()
 
     queue.close()
 
-    print("Training process finished.")
+    print("Training and validation process finished.")
