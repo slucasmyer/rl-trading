@@ -13,18 +13,21 @@ from pyrecorder.writers.video import Video
 # Really need to clean up/refactor
 # Plotting without backend for Colab? -- try/except for now
 
+
 class Plotter():
 
     def __init__(self, queue: object, n_gen: int):
         self.queue = queue  # For IPC
         self.max_gen = n_gen  # Num of gens to run NSGA-II for
         self.cmap = matplotlib.cm.viridis_r  # Colormap
-        self.obj_outcomes = [] # Objective outcomes for entire training population across generations
-        self.pareto_by_gen = [] # Pareto front for each generation's outcomes taken alone
-        self.final_pareto_frontier = [] # Pareto front for entire training population's outcomes across generations
+        # Objective outcomes for entire training population across generations
+        self.obj_outcomes = []
+        self.pareto_by_gen = []  # Pareto front for each generation's outcomes taken alone
+        # Pareto front for entire training population's outcomes across generations
+        self.final_pareto_frontier = []
         self.previous_frontier = None  # Previous frontier scatter
-        self.training_validation_figs_axs = [] # Collection of plots to update while training/validating
-        self.script_path = Path(__file__).parent
+        self.training_figs_axs = []  # Collection of plots to update while training/validating
+        self.script_path = Path(__file__).parent  # Path to this file's directory
 
     def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
                        ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
@@ -68,15 +71,15 @@ class Plotter():
         """
         Creates training plots. 
         """
-        self.training_validation_figs_axs.append(self._create_fig_ax(
+        self.training_figs_axs.append(self._create_fig_ax(
             title="Population Outcomes", dimensions=3))
-        self.training_validation_figs_axs.append(self._create_fig_ax(
+        self.training_figs_axs.append(self._create_fig_ax(
             title="Population Outcomes"))
-        self.training_validation_figs_axs.append(
+        self.training_figs_axs.append(
             self._create_fig_ax(title="Current Pareto Front (Gen 0)", dimensions=3))
-        self.previous_frontier = self.training_validation_figs_axs[2][1].scatter(
+        self.previous_frontier = self.training_figs_axs[2][1].scatter(
             [], [])  # For removal logic
-    
+
     def _create_validation_plots(self, x_data: list, y_data: list, z_data: list):
         """
         Generates scatter of validation outcomes for candidate solutions. 
@@ -90,10 +93,10 @@ class Plotter():
         fig_3d.canvas.draw()
         fig_2d.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        fig_3d.savefig(self.set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", 
-                                   f"{timestamp}_validation_3D.png"))
-        fig_2d.savefig(self.set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", 
-                                   f"{timestamp}_validation_2D.png"))
+        fig_3d.savefig(self.set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
+                                     f"{timestamp}_validation_3D.png"))
+        fig_2d.savefig(self.set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
+                                     f"{timestamp}_validation_2D.png"))
 
     def _update_training_plots(self, current_gen: int) -> None:
         """
@@ -104,16 +107,16 @@ class Plotter():
         x_par = [-x for x in x_par]
         z_par = [-z for z in z_par]
         normalized_gen = (current_gen-1) / self.max_gen
-        self.training_validation_figs_axs[0][1].scatter(
+        self.training_figs_axs[0][1].scatter(
             x_data, y_data, z_data, color=self.cmap(normalized_gen))
-        self.training_validation_figs_axs[1][1].scatter(
+        self.training_figs_axs[1][1].scatter(
             x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
-        self.previous_frontier = self.training_validation_figs_axs[2][1].scatter(x_par, y_par, z_par, color=self.cmap(
+        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, z_par, color=self.cmap(
             normalized_gen))
-        self.training_validation_figs_axs[2][1].set_title(
+        self.training_figs_axs[2][1].set_title(
             f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
-    
+
     def _create_training_outcomes_video(self):
         """
         Records video of each generation's performance on objectives.
@@ -124,7 +127,8 @@ class Plotter():
             # For each training generation
             for i in range(self.max_gen):
                 x_data, y_data, z_data = self.obj_outcomes[i]
-                fig, ax = self._create_fig_ax(f"Generation {i+1} Outcomes", colorbar=False)
+                fig, ax = self._create_fig_ax(
+                    f"Generation {i+1} Outcomes", colorbar=False)
                 ax.scatter(x_data, y_data)
                 # finally record the current visualization to the video
                 rec.record()
@@ -144,12 +148,12 @@ class Plotter():
                        for other_point in outcomes):
                 pareto_front.append(point)
         return pareto_front
-    
+
     def set_path(self, script_path: Path, dir_path: str, file_path: str) -> Path:
         """
         Sets output path.
         """
-        output_dir = script_path / Path(dir_path) 
+        output_dir = script_path / Path(dir_path)
         output_dir.mkdir(parents=True, exist_ok=True)
         new_path = output_dir / file_path
         return new_path
@@ -184,28 +188,29 @@ class Plotter():
                 self.obj_outcomes.append((x_data, y_data, z_data))
                 self._update_training_plots(current_generation)
 
-            for figure in self.training_validation_figs_axs:
+            for figure in self.training_figs_axs:
                 figure[0].canvas.flush_events()
             time.sleep(0.1)
 
         # Auto-save training figures at the end of training and record video
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         counter = 0
-        for fig_ax in self.training_validation_figs_axs:
+        for fig_ax in self.training_figs_axs:
             counter += 1
-            fig_ax[0].savefig(self.set_path(self.script_path, 
-                                             f"Output/performance_log/ngen_{self.max_gen}", 
-                                             f"{timestamp}_training_{counter}.png"))
-        try:     
+            fig_ax[0].savefig(self.set_path(self.script_path,
+                                            f"Output/performance_log/ngen_{self.max_gen}",
+                                            f"{timestamp}_training_{counter}.png"))
+        try:
             self._create_training_outcomes_video()
         except:
             print("\nContinuing without recording training video...\n")
-        
+
         # Generate validation scatters
         validation_results = self.queue.get()
-        x_data, y_data, z_data = zip(*[(x, y, z) for x, y, z, *r in validation_results])
+        x_data, y_data, z_data = zip(*[(x, y, z)
+                                     for x, y, z, *r in validation_results])
         self._create_validation_plots(x_data, y_data, z_data)
-        
+
         print("\nClose figures to continue...\n")
         plt.show(block=True)
         plt.ioff()
