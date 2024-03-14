@@ -212,20 +212,3 @@ class DataCollector:
         print("split_index", split_index, "type", type(split_index))
         self._split_data(split_index)
         
-        
-            
-
-
-if __name__ == '__main__':
-    # Test class and methods
-    data = pd.read_csv("training_tqqq.csv")
-    # data = pd.read_csv("testing_tqqq.csv")
-    data_collector = DataCollector(data)
-    data_collector.prepare_and_calculate_data(['open', 'high'])
-
-    # Test output
-    # print(data_collector.data_df.head())
-
-    # To save dataframe as csv
-    # data_collector.data_df.to_csv("training_tqqq_prepared.csv")
-    # data_collector.data_df.to_csv("testing_tqqq_prepared.csv")
