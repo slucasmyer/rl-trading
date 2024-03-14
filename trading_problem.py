@@ -67,7 +67,6 @@ class PerformanceLogger(Callback):
     def notify(self, algorithm):
         F = algorithm.pop.get("F") # The objective values
         X = algorithm.pop.get("X") # The decision variables
-        # print(f"notify F: {F}, X: {X}, best: {F.min()}")
         # Log the objective values (and any additional information)
         self.history.append({
             "generation": algorithm.n_gen,
