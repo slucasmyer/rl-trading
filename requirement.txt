@@ -13,6 +13,7 @@ cycler==0.12.1
 Deprecated==1.2.14
 dill==0.3.8
 fake-useragent==1.4.0
+feedparser==6.0.11
 filelock==3.13.1
 fonttools==4.49.0
 fsspec==2024.2.0
@@ -48,6 +49,7 @@ requests-html==0.10.0
 scikit-learn==1.4.1.post1
 scipy==1.12.0
 setuptools==69.1.1
+sgmllib3k==1.0.0
 six==1.16.0
 soupsieve==2.5
 sympy==1.12
@@ -61,4 +63,5 @@ w3lib==2.1.2
 websockets==10.4
 wheel==0.42.0
 wrapt==1.16.0
+yahoo-fin==0.8.9.1
 zipp==3.17.0

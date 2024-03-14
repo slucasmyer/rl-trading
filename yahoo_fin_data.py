@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/usr/local/lib/python3.11/site-packages')
 from yahoo_fin import stock_info
 
 
