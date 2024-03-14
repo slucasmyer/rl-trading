@@ -7,12 +7,6 @@ from pathlib import Path
 from pyrecorder.recorder import Recorder
 from pyrecorder.writers.video import Video
 
-# TO-DO: Combine training into one fig and validation into another? Too many open windows.
-# SAve videos to performance_log along with other training data?
-# Move colorbar label closer to colorbar.
-# Really need to clean up/refactor
-# Plotting without backend for Colab? -- try/except for now
-
 
 class Plotter():
 
@@ -20,14 +14,12 @@ class Plotter():
         self.queue = queue  # For IPC
         self.max_gen = n_gen  # Num of gens to run NSGA-II for
         self.cmap = matplotlib.cm.viridis_r  # Colormap
-        # Objective outcomes for entire training population across generations
-        self.obj_outcomes = []
+        self.obj_outcomes = []  # Objective outcomes for training population across generations
         self.pareto_by_gen = []  # Pareto front for each generation's outcomes taken alone
-        # Pareto front for entire training population's outcomes across generations
-        self.final_pareto_frontier = []
+        self.final_pareto_frontier = []  # Pareto front for training population's outcomes across generations
         self.previous_frontier = None  # Previous frontier scatter
         self.training_figs_axs = []  # Collection of plots to update while training/validating
-        self.script_path = Path(__file__).parent  # Path to this file's directory
+        self.script_path = Path(__file__).parent  # Path script is run from
 
     def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
                        ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
