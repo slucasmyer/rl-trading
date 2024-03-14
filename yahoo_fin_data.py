@@ -13,7 +13,3 @@ def get_data(ticker: str, save: bool = False):
         raw_df.to_csv("raw_tqqq_data.csv", index=False)
     else:
         return raw_df
-
-
-if __name__ == "__main__":
-    get_data("TQQQ")
