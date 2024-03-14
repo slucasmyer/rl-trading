@@ -204,7 +204,7 @@ def begin_training(queue, n_pop, n_gen):
         ax.set_ylabel('Drawdown')
         ax.set_zlabel('Number of Trades')
         
-        plt.savefig(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}_validation.png"))
+        
         plt.show()
 
     # use the video writer as a resource
