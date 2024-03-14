@@ -193,34 +193,6 @@ def train_and_validate(queue, n_pop, n_gen):
         
         validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
 
-        # plot in crude manner
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-
-        # # Plotting data
-        # ax.scatter(validation_results_df["profit"], validation_results_df["drawdown"], validation_results_df["num_trades"])
-
-        # ax.set_xlabel('Profit')
-        # ax.set_ylabel('Drawdown')
-        # ax.set_zlabel('Number of Trades')
-        
-        # plt.savefig(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}_validation.png"))
-        # plt.show()
-
-    # use the video writer as a resource
-    
-    # with Recorder(Video(f"Assets/videos/n_gen_{n_gen}_{date_time}.mp4")) as rec:
-
-    #     # for each algorithm object in the history
-    #     for entry in res.history:
-    #         sc = Scatter(title=("Gen %s" % entry.n_gen), labels=["Profit", "Drawdown", "Trade Count"])
-    #         sc.add(entry.pop.get("F"))
-    #         sc.add(entry.problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
-    #         sc.do()
-
-    #         # finally record the current visualization to the video
-    #         rec.record()
-    #     rec.close()
 
     pool.close()
 
